@@ -196,6 +196,21 @@ input[type="date"].field-input { color-scheme: dark; cursor: pointer; }
 .flash.ok  { background: var(--exact-bg); border: 1px solid var(--exact-border); color: var(--exact-text); display: block; }
 .flash.err { background: #1E0E14; border: 1px solid rgba(140,40,60,0.6); color: var(--warm-text); display: block; }
 
+/* ── Date conflict warning ────────────────────────────────────────────────────── */
+.date-conflict { display: none; margin-top: 8px; padding: 10px 14px; background: #2C1600; border: 1px solid #8C5000; border-left: 3px solid #E87722; font-family: 'JetBrains Mono', monospace; font-size: 0.76rem; color: #E8A844; letter-spacing: 0.04em; line-height: 1.5; }
+.date-conflict.visible { display: block; }
+.date-conflict strong { color: #F0C060; }
+
+/* ── Scheduled dates mini list ───────────────────────────────────────────────── */
+.sched-list { margin-top: 10px; display: flex; flex-direction: column; gap: 3px; max-height: 180px; overflow-y: auto; }
+.sched-item { display: flex; align-items: center; gap: 8px; padding: 5px 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; border-left: 2px solid var(--border-strong); }
+.sched-item.is-today { border-left-color: var(--accent); }
+.sched-item.is-past  { opacity: 0.45; }
+.sched-date { color: var(--text-dim); min-width: 76px; flex-shrink: 0; }
+.sched-name { color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sched-item.is-today .sched-date { color: var(--accent); }
+.sched-item.is-today .sched-name { color: var(--text-primary); }
+
 /* ── Two-column layout ───────────────────────────────────────────────────────── */
 @media (min-width: 700px) {
   .curate-grid { display: grid; grid-template-columns: 1fr 320px; gap: 28px; align-items: start; }
@@ -354,6 +369,12 @@ input[type="date"].field-input { color-scheme: dark; cursor: pointer; }
 
         <div class="section-label">Puzzle date</div>
         <input type="date" class="field-input" id="puzzle-date">
+        <div class="date-conflict" id="date-conflict"></div>
+
+        <div class="section-label" style="margin-top:20px;">Scheduled
+          <span style="font-size:0.62rem;margin-left:4px;color:var(--text-dim);">(all saved puzzles)</span>
+        </div>
+        <div class="sched-list" id="sched-list"><span style="color:var(--text-dim);font-family:JetBrains Mono,monospace;font-size:0.72rem;">Loading...</span></div>
 
         <div class="section-label">Save</div>
         <div class="save-row">
@@ -629,6 +650,7 @@ async function savePuzzle() {
     msg.className = "save-msg ok";
     msg.textContent = "Saved: " + selectedPlayer.name + " on " + dateVal;
     showFlash("ok", "Puzzle saved — " + selectedPlayer.name + " on " + dateVal);
+    loadScheduledDates();
   } else {
     msg.className = "save-msg err";
     msg.textContent = data.error || "Save failed.";
@@ -716,6 +738,51 @@ function startStatsAutoRefresh() {
   }, 30000);
 }
 
+// ── Scheduled dates ────────────────────────────────────────────────────────────
+let scheduledDates = {}; // date -> name
+
+async function loadScheduledDates() {
+  try {
+    const res = await fetch(`/admin/api/scheduled-dates?sport=${currentSport}`);
+    if (!res.ok) return;
+    const rows = await res.json();
+    scheduledDates = {};
+    rows.forEach(r => { scheduledDates[r.date] = r.name; });
+    renderSchedList(rows);
+  } catch(_) {}
+}
+
+function renderSchedList(rows) {
+  const el = document.getElementById("sched-list");
+  if (!rows.length) {
+    el.innerHTML = '<span style="color:var(--text-dim);font-family:\'JetBrains Mono\',monospace;font-size:0.72rem;">No puzzles scheduled yet.</span>';
+    return;
+  }
+  const today = new Date().toISOString().slice(0, 10);
+  el.innerHTML = rows.map(r => {
+    const isPast  = r.date < today;
+    const isToday = r.date === today;
+    return `<div class="sched-item${isToday ? " is-today" : ""}${isPast ? " is-past" : ""}">
+      <span class="sched-date">${r.date}${isToday ? " ★" : ""}</span>
+      <span class="sched-name">${esc(r.name)}</span>
+    </div>`;
+  }).join("");
+}
+
+function checkDateConflict(dateVal) {
+  const el = document.getElementById("date-conflict");
+  if (dateVal && scheduledDates[dateVal]) {
+    el.innerHTML = `⚠ <strong>${esc(scheduledDates[dateVal])}</strong> is already scheduled on this date. Saving will overwrite them.`;
+    el.classList.add("visible");
+  } else {
+    el.classList.remove("visible");
+  }
+}
+
+document.getElementById("puzzle-date").addEventListener("change", e => {
+  checkDateConflict(e.target.value);
+});
+
 // ── Helpers ────────────────────────────────────────────────────────────────────
 function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, c =>
@@ -730,6 +797,8 @@ function esc(s) {
   const d = new Date();
   d.setDate(d.getDate() + 1);
   document.getElementById("puzzle-date").value = d.toISOString().slice(0, 10);
+
+  loadScheduledDates();
 
   const initialTab = "{{ initial_tab }}";
   const validTabs = ["stats", "curate", "upcoming"];

@@ -728,6 +728,27 @@ def admin_api_narrowing():
     return jsonify({"count": count})
 
 
+@app.route("/admin/api/scheduled-dates")
+def admin_api_scheduled_dates():
+    if not _require_admin():
+        return jsonify({"error": "Unauthorized"}), 403
+    sport = request.args.get("sport", "nba")
+    if sport not in VALID_SPORTS:
+        sport = "nba"
+    pt, dt, _ = _sport_tables(sport)
+    try:
+        con = sqlite3.connect(DB_PATH)
+        rows = con.execute(
+            f"SELECT dp.date, p.name FROM {dt} dp "
+            f"JOIN {pt} p ON p.id = dp.player_id ORDER BY dp.date"
+        ).fetchall()
+        con.close()
+        return jsonify([{"date": r[0], "name": r[1]} for r in rows])
+    except Exception as exc:
+        log.error("admin_api_scheduled_dates(%s): %s", sport, exc)
+        return jsonify([])
+
+
 @app.route("/admin/api/upcoming")
 def admin_api_upcoming():
     if not _require_admin():
