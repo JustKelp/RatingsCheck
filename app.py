@@ -330,22 +330,25 @@ def _parse_sport() -> str:
     return sport if sport in VALID_SPORTS else "nba"
 
 
-def get_today_puzzle(sport: str = "nba") -> dict:
-    today = date.today().isoformat()
-    db_puzzle = get_today_puzzle_db(today, sport)
+def get_puzzle_for_date(date_str: str, sport: str = "nba") -> dict:
+    db_puzzle = get_today_puzzle_db(date_str, sport)
     if db_puzzle:
         return db_puzzle
     players = _get_players(sport)
     if not players:
         return {"target": "", "revealOrder": SPORT_DEFAULT_REVEAL_ORDERS[sport]}
-    seed = int(hashlib.md5(f"{today}_{sport}".encode()).hexdigest(), 16)
+    seed = int(hashlib.md5(f"{date_str}_{sport}".encode()).hexdigest(), 16)
     target = players[seed % len(players)]
     return {"target": target["name"], "revealOrder": SPORT_DEFAULT_REVEAL_ORDERS[sport]}
 
 
-def fresh_state():
+def get_today_puzzle(sport: str = "nba") -> dict:
+    return get_puzzle_for_date(date.today().isoformat(), sport)
+
+
+def fresh_state(date_str: str | None = None) -> dict:
     return {
-        "date": date.today().isoformat(),
+        "date": date_str or date.today().isoformat(),
         "revealed": INITIAL_REVEALED,
         "guesses": [],
         "done": False,
@@ -353,14 +356,16 @@ def fresh_state():
     }
 
 
-def get_state(sport: str = "nba") -> dict:
+def get_state(sport: str = "nba", date_str: str | None = None) -> dict:
     today = date.today().isoformat()
-    key = f"game_{sport}"
-    # Backward compat: migrate legacy "game" key to "game_nba"
-    if sport == "nba" and "game" in session and key not in session:
+    if date_str is None:
+        date_str = today
+    is_today = (date_str == today)
+    key = f"game_{sport}" if is_today else f"game_{sport}_{date_str}"
+    if sport == "nba" and is_today and "game" in session and key not in session:
         session[key] = session.pop("game")
-    if key not in session or session[key].get("date") != today:
-        session[key] = fresh_state()
+    if key not in session or (is_today and session[key].get("date") != today):
+        session[key] = fresh_state(date_str)
     return session[key]
 
 
@@ -374,9 +379,12 @@ def find_player(name: str, sport: str = "nba") -> dict | None:
     return None
 
 
-def serialize_state(sport: str = "nba") -> dict:
-    state = get_state(sport)
-    puzzle = get_today_puzzle(sport)
+def serialize_state(sport: str = "nba", date_str: str | None = None) -> dict:
+    today = date.today().isoformat()
+    if date_str is None:
+        date_str = today
+    state = get_state(sport, date_str)
+    puzzle = get_puzzle_for_date(date_str, sport)
     target = find_player(puzzle["target"], sport)
     attr_keys = SPORT_ATTR_KEYS[sport]
     attr_labels = SPORT_ATTR_LABELS[sport]
@@ -422,7 +430,11 @@ def index():
 @app.route("/api/state")
 def api_state():
     sport = _parse_sport()
-    return jsonify(serialize_state(sport))
+    today = date.today().isoformat()
+    date_str = request.args.get("date", today)
+    if date_str > today:
+        date_str = today
+    return jsonify(serialize_state(sport, date_str))
 
 
 @app.route("/api/players")
@@ -497,8 +509,12 @@ def api_logout():
 def api_guess():
     data = request.get_json(silent=True) or {}
     sport = data.get("sport", "nba") if data.get("sport") in VALID_SPORTS else "nba"
+    today = date.today().isoformat()
+    date_str = data.get("date", today)
+    if date_str > today:
+        date_str = today
     name = data.get("name", "")
-    state = get_state(sport)
+    state = get_state(sport, date_str)
     if state["done"]:
         return jsonify({"error": "game over"}), 400
     player = find_player(name, sport)
@@ -507,7 +523,7 @@ def api_guess():
     if any(g.get("name") == player["name"] for g in state["guesses"]):
         return jsonify({"error": "already guessed"}), 400
 
-    puzzle = get_today_puzzle(sport)
+    puzzle = get_puzzle_for_date(date_str, sport)
     attr_keys = SPORT_ATTR_KEYS[sport]
     guess_entry = {k: player.get(k, 0) for k in attr_keys}
     guess_entry["name"] = player["name"]
@@ -526,7 +542,7 @@ def api_guess():
             state["revealed"] = len(puzzle["revealOrder"])
 
     session.modified = True
-    return jsonify(serialize_state(sport))
+    return jsonify(serialize_state(sport, date_str))
 
 
 @app.route("/api/past-puzzles")
@@ -538,9 +554,9 @@ def api_past_puzzles():
     for d in days:
         try:
             dt = _date.fromisoformat(d["date"])
-            label = dt.strftime("%b") + " " + str(dt.day) + " — " + d["name"]
+            label = dt.strftime("%b") + " " + str(dt.day)
         except Exception:
-            label = d["date"] + " — " + d.get("name", "")
+            label = d["date"]
         result.append({"date": d["date"], "label": label})
     return jsonify(result)
 

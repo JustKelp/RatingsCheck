@@ -376,6 +376,7 @@ const SPORT_LABELS = {
 };
 
 let currentSport = localStorage.getItem("rebuildle_sport") || "nba";
+let currentViewDate = null; // null = today, "YYYY-MM-DD" = past puzzle
 
 function applySportTheme(sport) {
   const t = SPORT_THEMES[sport] || SPORT_THEMES.nba;
@@ -422,7 +423,7 @@ document.querySelectorAll(".sport-option").forEach(el => {
 });
 
 async function switchSport() {
-  // Reset display
+  currentViewDate = null;
   state = null;
   players = [];
   lastRenderedRevealCount = 0;
@@ -433,7 +434,6 @@ async function switchSport() {
   document.getElementById("status-bar").textContent = "";
   document.getElementById("guess-input").value = "";
   document.getElementById("dropdown").style.display = "none";
-  // Clear date selector and reload
   const sel = document.getElementById("day-select");
   sel.innerHTML = "";
   await Promise.all([loadPlayers(), loadState(), loadPastPuzzles()]);
@@ -566,8 +566,18 @@ async function loadPastPuzzles() {
   } catch(_) {}
 }
 
-document.getElementById("day-select").addEventListener("change", e => {
-  if (e.target.value && e.target.value !== "today") e.target.value = "today";
+document.getElementById("day-select").addEventListener("change", async e => {
+  const val = e.target.value;
+  currentViewDate = (val === "today") ? null : val;
+  lastRenderedRevealCount = 0;
+  gameWasDone = false;
+  document.getElementById("target-section").innerHTML = "";
+  document.getElementById("guesses-section").innerHTML = "";
+  document.getElementById("end-msg").innerHTML = "";
+  document.getElementById("status-bar").textContent = "";
+  document.getElementById("guess-input").value = "";
+  document.getElementById("dropdown").style.display = "none";
+  await loadState();
 });
 
 function pillClass(diff) {
@@ -609,7 +619,8 @@ function render() {
       }
       html += '</div>';
     }
-    html += '<div class="section-label">Today&rsquo;s player</div><div class="tile-row">';
+    const dateLabel = currentViewDate ? formatDate(new Date(currentViewDate + "T12:00:00")) + " puzzle" : "Today’s player";
+    html += '<div class="section-label">' + dateLabel + '</div><div class="tile-row">';
     state.revealedAttrs.forEach((attr, i) => {
       const val = state.revealedValues[attr];
       const label = state.attrLabels[attr];
@@ -649,7 +660,8 @@ function render() {
 }
 
 async function loadState() {
-  const res = await fetch(`/api/state?sport=${currentSport}`);
+  const dateParam = currentViewDate ? `&date=${currentViewDate}` : "";
+  const res = await fetch(`/api/state?sport=${currentSport}${dateParam}`);
   state = await res.json();
   render();
 }
@@ -660,9 +672,11 @@ async function loadPlayers() {
 }
 
 async function submitGuess(name) {
+  const today = new Date().toISOString().slice(0, 10);
+  const dateStr = currentViewDate || today;
   const res = await fetch("/api/guess", {
     method: "POST", headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({name, sport: currentSport}),
+    body: JSON.stringify({name, sport: currentSport, date: dateStr}),
   });
   if (!res.ok) return;
   state = await res.json();
