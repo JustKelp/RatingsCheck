@@ -1,6 +1,13 @@
 # Secrets — never commit
 .env
 
+# Claude Code local config
+.claude/
+
+# Excel/Office files
+*.xlsx
+*.xls
+
 # Database — upload once via SCP, grows independently on the server
 *.db
 
