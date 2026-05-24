@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Rebuildle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --primary:      #7A1F30;
+  --primary-dim:  #3E0F18;
+  --accent:       #C49A3A;
+  --accent-dim:   #7A5E20;
+  --exact-bg:     #163224;
+  --exact-border: #2E6E44;
+  --exact-text:   #72C48E;
+  --close-bg:     #2C1C00;
+  --close-border: #8C6020;
+  --close-text:   #D4AA44;
+  --warm-bg:      #221018;
+  --warm-border:  rgba(140,40,60,0.75);
+  --warm-text:    #C45C78;
+  --cold-bg:      #121218;
+  --cold-border:  rgba(130,126,175,0.75);
+  --cold-text:    #A8A4CC;
+  --bg-darkest:   #111114;
+  --bg-dark:      #181820;
+  --bg-mid:       #1E1E26;
+  --bg-card:      #161620;
+  --bg-elevated:  #202028;
+  --text-primary: #F0EEF4;
+  --text-muted:   #B0ACBC;
+  --text-dim:     #8880A0;
+  --border:       rgba(255,255,255,0.07);
+  --border-strong:rgba(255,255,255,0.14);
+  --clip: 8px;
+  --clip-sm: 5px;
+}
+
+body {
+  font-family: 'Source Sans 3', sans-serif;
+  background: var(--bg-darkest);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    repeating-linear-gradient(135deg, rgba(255,255,255,0.010) 0, rgba(255,255,255,0.010) 1px, transparent 1px, transparent 60px),
+    repeating-linear-gradient(0deg, rgba(0,0,0,0.12) 0, rgba(0,0,0,0.12) 1px, transparent 1px, transparent 3px);
+  pointer-events: none; z-index: 0;
+}
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(circle at 0% 0%,   rgba(122,31,48,0.07)   0%, transparent 50%),
+    radial-gradient(circle at 100% 100%, rgba(196,154,58,0.04) 0%, transparent 50%);
+  pointer-events: none; z-index: 0;
+}
+
+header {
+  position: sticky; top: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 76px; padding: 0 20px;
+  background: var(--bg-darkest);
+  border-bottom: 1px solid var(--border);
+}
+.header-left { text-align: left; }
+.header-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+header::after {
+  content: '';
+  position: absolute; bottom: -1px; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--primary) 0%, var(--primary) 35%, transparent 35%, transparent 65%, var(--accent) 65%, var(--accent) 100%);
+  pointer-events: none;
+}
+.logo {
+  font-family: 'Oswald', sans-serif; font-size: 2.1rem; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase; line-height: 1; color: var(--text-primary);
+}
+.logo span { color: var(--accent); }
+
+/* ── Sport selector ─────────────────────────────────────────────────────────── */
+.sport-selector { position: relative; margin-top: 5px; }
+
+.sport-selector-btn {
+  background: none; border: none; padding: 0; cursor: pointer;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.64rem;
+  letter-spacing: 0.3em; color: var(--text-dim); text-transform: uppercase;
+  display: flex; align-items: center; gap: 5px; transition: color 0.15s;
+}
+.sport-selector-btn:hover { color: var(--accent); }
+.sport-caret { font-size: 0.75rem; transition: transform 0.15s; display: inline-block; }
+.sport-selector-btn.open .sport-caret { transform: rotate(180deg); }
+
+.sport-dropdown {
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 300;
+  background: var(--bg-elevated); border: 1px solid var(--border-strong);
+  border-left: 3px solid var(--accent); min-width: 200px;
+  display: none; animation: fadeDown 0.12s ease;
+}
+.sport-dropdown.open { display: block; }
+@keyframes fadeDown { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+
+.sport-option {
+  padding: 10px 14px; cursor: pointer;
+  font-family: 'Oswald', sans-serif; font-size: 0.82rem; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text-muted); border-bottom: 1px solid var(--border);
+  transition: background 0.1s, color 0.1s;
+}
+.sport-option:last-child { border-bottom: none; }
+.sport-option:hover { background: var(--bg-mid); color: var(--accent); }
+.sport-option.active { color: var(--accent); border-left: 2px solid var(--accent); padding-left: 12px; }
+
+.day-select {
+  background: rgba(196,154,58,0.08); border: 1px solid var(--accent-dim); border-left: 3px solid var(--accent);
+  color: var(--accent); font-family: 'Oswald', sans-serif; font-size: 0.88rem; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase; padding: 8px 30px 8px 12px;
+  outline: none; cursor: pointer; appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23C49A3A'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center;
+  clip-path: polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px);
+  transition: background 0.15s, color 0.15s; white-space: nowrap;
+}
+.day-select:hover { background: rgba(196,154,58,0.14); }
+.day-select:focus { color: var(--text-primary); }
+.day-select option { background: #1C1018; color: var(--text-primary); font-family: sans-serif; }
+
+.htp-btn {
+  background: transparent; border: 1px solid var(--border-strong); border-left: 2px solid var(--primary);
+  color: var(--text-muted); font-family: 'Oswald', sans-serif; font-size: 0.82rem; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase; padding: 8px 16px; cursor: pointer;
+  clip-path: polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px);
+  transition: color 0.15s, border-color 0.15s; white-space: nowrap;
+}
+.htp-btn:hover { color: var(--text-primary); border-color: var(--primary); border-left-color: var(--primary); }
+
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200;
+  display: none; align-items: center; justify-content: center; padding: 20px;
+}
+.modal-overlay.open { display: flex; }
+.modal-card {
+  background: var(--bg-elevated); border: 1px solid var(--border-strong); border-top: 3px solid var(--primary);
+  max-width: 500px; width: 100%;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+}
+.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 22px 26px 18px; border-bottom: 1px solid var(--border); }
+.modal-title { font-family: 'Oswald', sans-serif; font-size: 1.25rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-primary); }
+.modal-close { background: none; border: none; color: var(--text-muted); font-size: 1.6rem; line-height: 1; cursor: pointer; padding: 0 2px; transition: color 0.15s; }
+.modal-close:hover { color: var(--text-primary); }
+.modal-body { padding: 22px 26px 30px; display: flex; flex-direction: column; gap: 16px; }
+.modal-rule { font-family: 'Source Sans 3', sans-serif; font-size: 1rem; color: var(--text-muted); line-height: 1.55; }
+.modal-rule strong { color: var(--text-primary); font-weight: 600; }
+.modal-swatches { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+.modal-swatch-row { display: flex; align-items: center; gap: 12px; }
+.modal-swatch-tile {
+  width: 48px; height: 36px; display: flex; align-items: center; justify-content: center;
+  font-family: 'Oswald', sans-serif; font-size: 1rem; font-weight: 700;
+  clip-path: polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px); flex-shrink: 0;
+}
+.modal-swatch-label { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--text-muted); letter-spacing: 0.05em; }
+
+.container { max-width: 640px; margin: 0 auto; padding: 32px 20px 100px; position: relative; z-index: 1; }
+
+.section-label {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; letter-spacing: 0.3em;
+  color: var(--text-dim); text-transform: uppercase; text-align: center; margin-bottom: 16px; margin-top: 32px;
+}
+
+.tile-row {
+  display: flex; gap: 7px; justify-content: center; flex-wrap: nowrap; overflow-x: auto;
+  margin-bottom: 6px; padding-bottom: 4px; -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; -ms-overflow-style: none;
+}
+.tile-row::-webkit-scrollbar { display: none; }
+.tile {
+  width: 92px; height: 110px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  border: 1px solid var(--border-strong); background: var(--bg-card);
+  clip-path: polygon(var(--clip-sm) 0, 100% 0, 100% calc(100% - var(--clip-sm)), calc(100% - var(--clip-sm)) 100%, 0 100%, 0 var(--clip-sm));
+  transition: transform 0.15s ease;
+}
+.tile-val { font-family: 'Oswald', sans-serif; font-size: 2.1rem; font-weight: 700; line-height: 1; color: var(--text-primary); }
+.tile-label { font-family: 'JetBrains Mono', monospace; font-size: 0.58rem; font-weight: 700; letter-spacing: 0.02em; margin-top: 6px; color: var(--text-muted); text-transform: uppercase; text-align: center; line-height: 1.2; white-space: normal; max-width: 74px; }
+.tile-arrow { font-size: 0.9rem; margin-top: 4px; font-weight: 700; }
+
+.tile.target { border-color: rgba(196,154,58,0.22); background: var(--bg-mid); }
+.tile.target .tile-val { color: var(--accent); }
+.tile.target .tile-label { color: var(--text-dim); }
+.tile.exact { background: var(--exact-bg); border-color: var(--exact-border); }
+.tile.exact .tile-val, .tile.exact .tile-arrow { color: var(--exact-text); }
+.tile.close { background: var(--close-bg); border-color: var(--close-border); }
+.tile.close .tile-val, .tile.close .tile-arrow { color: var(--close-text); }
+.tile.warm { background: var(--warm-bg); border-color: var(--warm-border); }
+.tile.warm .tile-val, .tile.warm .tile-arrow { color: var(--warm-text); }
+.tile.cold { background: var(--cold-bg); border-color: var(--cold-border); }
+.tile.cold .tile-val, .tile.cold .tile-arrow { color: var(--cold-text); }
+
+.guess-block { margin-bottom: 14px; animation: slideIn 0.25s ease; }
+@keyframes slideIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes tileGlow { 0% { box-shadow: 0 0 0 0 rgba(196,154,58,0); } 25% { box-shadow: 0 0 14px 5px rgba(196,154,58,0.7); } 100% { box-shadow: 0 0 0 0 rgba(196,154,58,0); } }
+.tile-new { animation: tileGlow 2s ease-out; }
+@keyframes answerGlow { 0% { opacity: 0; transform: scale(0.95); text-shadow: none; } 30% { opacity: 1; transform: scale(1.03); text-shadow: 0 0 30px rgba(196,154,58,0.9), 0 0 60px rgba(196,154,58,0.4); } 100% { opacity: 1; transform: scale(1); text-shadow: 0 0 12px rgba(196,154,58,0.25); } }
+.guess-name { font-family: 'Oswald', sans-serif; font-size: 1.05rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; text-align: center; color: var(--text-primary); margin-bottom: 8px; }
+.guess-meta { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--text-muted); font-weight: 400; margin-left: 8px; letter-spacing: 0.05em; }
+.team-logo { width: 22px; height: 22px; object-fit: contain; vertical-align: middle; margin-left: 8px; opacity: 0.88; display: inline-block; }
+
+.input-area { position: relative; margin: 28px 0 12px; }
+input.guess-input {
+  width: 100%; padding: 10px 14px; background: rgba(0,0,0,0.5); color: var(--text-primary);
+  border: none; border-left: 3px solid var(--border-strong);
+  font-family: 'Source Sans 3', sans-serif; font-size: 0.95rem; outline: none;
+  transition: border-color 0.15s ease, background 0.15s ease; border-radius: 0; letter-spacing: 0.02em;
+}
+input.guess-input:focus { border-left-color: var(--primary); background: rgba(0,0,0,0.65); }
+input.guess-input::placeholder { color: var(--text-dim); }
+
+.dropdown {
+  position: absolute; top: 100%; left: 0; right: 0; margin-top: 3px;
+  background: var(--bg-elevated); border: 1px solid var(--border-strong); border-left: 3px solid var(--primary);
+  max-height: 280px; overflow-y: auto; display: none; z-index: 10;
+}
+.dropdown-item { padding: 13px 18px; cursor: pointer; font-size: 1.05rem; border-bottom: 1px solid var(--border); color: var(--text-primary); font-family: 'Source Sans 3', sans-serif; transition: background 0.1s ease; }
+.dropdown-item:hover, .dropdown-item.active { background: var(--bg-mid); color: var(--accent); }
+.dropdown-item:last-child { border-bottom: none; }
+.dropdown-team { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: var(--text-muted); margin-left: 8px; letter-spacing: 0.05em; }
+
+.status-bar { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; letter-spacing: 0.25em; color: var(--text-muted); text-align: center; text-transform: uppercase; margin-top: 14px; }
+
+.answer-revealed { text-align: center; padding: 14px 0 6px; margin-bottom: 4px; }
+.answer-name-display { font-family: 'Oswald', sans-serif; font-size: 2rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); display: block; }
+.answer-revealed.just-ended .answer-name-display { animation: answerGlow 1.8s ease-out forwards; }
+.answer-sub { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase; margin-top: 8px; display: block; }
+.answer-sub.win-sub  { color: var(--exact-text); }
+.answer-sub.lose-sub { color: var(--cold-text); }
+
+.legend { display: flex; justify-content: center; gap: 20px; margin-top: 32px; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; letter-spacing: 0.08em; color: var(--text-muted); text-transform: uppercase; }
+.legend-swatch { width: 16px; height: 16px; clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px); }
+
+@media (max-width: 480px) {
+  .tile { width: 74px; height: 90px; }
+  .tile-val { font-size: 1.65rem; }
+  .tile-label { font-size: 0.54rem; max-width: 62px; }
+  .logo { font-size: 1.7rem; }
+  .container { padding: 24px 14px 80px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="logo">RE<span>BUILD</span>LE</div>
+    <div class="sport-selector" id="sport-selector">
+      <button class="sport-selector-btn" id="sport-selector-btn" aria-haspopup="true">
+        <span id="sport-label">Daily NBA 2K Puzzle</span>
+        <span class="sport-caret">&#9660;</span>
+      </button>
+      <div class="sport-dropdown" id="sport-dropdown" role="menu">
+        <div class="sport-option" data-sport="nba" role="menuitem">NBA 2K</div>
+        <div class="sport-option" data-sport="nhl" role="menuitem">NHL 26</div>
+        <div class="sport-option" data-sport="madden" role="menuitem">Madden 26</div>
+        <div class="sport-option" data-sport="mlb" role="menuitem">MLB The Show 26</div>
+      </div>
+    </div>
+  </div>
+  <div class="header-right">
+    <select class="day-select" id="day-select"></select>
+    <button class="htp-btn" id="auth-btn">Sign In</button>
+    <button class="htp-btn" id="htp-btn">How to Play</button>
+  </div>
+</header>
+
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">How to Play</div>
+      <button class="modal-close" id="modal-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-rule">Guess the hidden <strong>player</strong> in 5 tries. Use the <strong style="color:var(--accent)">sport selector</strong> in the top left to switch between NBA 2K, NHL 26, Madden 26, and MLB The Show 26.</div>
+      <div class="modal-rule">After each wrong guess, <strong>one more attribute</strong> is revealed. The first 3 attributes are shown at the start.</div>
+      <div class="modal-rule">Each tile shows how close that attribute is between your guess and the answer. Arrows show whether the answer is <strong>higher &#9650;</strong> or <strong>lower &#9660;</strong>.</div>
+      <div class="modal-swatches">
+        <div class="modal-swatch-row">
+          <div class="modal-swatch-tile" style="background:var(--exact-bg);border:1px solid var(--exact-border);color:var(--exact-text)">87</div>
+          <div class="modal-swatch-label"><strong style="color:var(--exact-text)">Exact</strong> &mdash; within 1 point of the answer</div>
+        </div>
+        <div class="modal-swatch-row">
+          <div class="modal-swatch-tile" style="background:var(--close-bg);border:1px solid var(--close-border);color:var(--close-text)">74</div>
+          <div class="modal-swatch-label"><strong style="color:var(--close-text)">Close</strong> &mdash; within 5 points</div>
+        </div>
+        <div class="modal-swatch-row">
+          <div class="modal-swatch-tile" style="background:var(--warm-bg);border:1px solid var(--warm-border);color:var(--warm-text)">61</div>
+          <div class="modal-swatch-label"><strong style="color:var(--warm-text)">Warm</strong> &mdash; within 10 points</div>
+        </div>
+        <div class="modal-swatch-row">
+          <div class="modal-swatch-tile" style="background:var(--cold-bg);border:1px solid var(--cold-border);color:var(--cold-text)">42</div>
+          <div class="modal-swatch-label"><strong style="color:var(--cold-text)">Cold</strong> &mdash; more than 10 points away</div>
+        </div>
+      </div>
+      <div class="modal-rule">A new puzzle drops every day. Come back tomorrow!</div>
+      <div class="modal-rule">Use the <strong style="color:var(--accent)">date selector</strong> in the top right to replay any previous day&rsquo;s puzzle.</div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="login-overlay">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">Sign In</div>
+      <button class="modal-close" id="login-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-rule">Use your <strong>StatCheck</strong> username and password.</div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px;">
+        <input type="text" id="login-username" placeholder="Username" autocomplete="username"
+               class="guess-input" style="margin:0;border-left-color:var(--border-strong);">
+        <input type="password" id="login-password" placeholder="Password" autocomplete="current-password"
+               class="guess-input" style="margin:0;border-left-color:var(--border-strong);">
+        <p id="login-error" style="color:var(--warm-text);font-size:0.82rem;min-height:1.1em;margin:0;font-family:'JetBrains Mono',monospace;letter-spacing:0.03em;"></p>
+        <button id="login-submit"
+                style="padding:13px;background:var(--primary);color:var(--text-primary);border:none;cursor:pointer;
+                       font-family:'Oswald',sans-serif;font-size:0.95rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;
+                       clip-path:polygon(5px 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%,0 5px);
+                       transition:background 0.15s;">Log In</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div id="target-section"></div>
+  <div id="guesses-section"></div>
+  <div id="end-msg"></div>
+
+  <div class="input-area" id="input-area">
+    <input type="text" class="guess-input" id="guess-input"
+           placeholder="Type a player name..." autocomplete="off" autocapitalize="words">
+    <div class="dropdown" id="dropdown"></div>
+  </div>
+
+  <div class="status-bar" id="status-bar"></div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-swatch" style="background:#14281E;outline:1px solid #245A38"></div>&plusmn;1 exact</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#281600;outline:1px solid #7A5018"></div>&plusmn;5 close</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#200E14;outline:1px solid rgba(122,31,48,0.55)"></div>&plusmn;10 warm</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#0E0C10;outline:1px solid rgba(120,116,160,0.65)"></div>&gt;10 cold</div>
+  </div>
+</div>
+
+<script>
+// ── Sport themes ──────────────────────────────────────────────────────────────
+const SPORT_THEMES = {
+  nba:    { primary: "#7A1F30", primaryDim: "#3E0F18", accent: "#C49A3A", accentDim: "#7A5E20" },
+  nhl:    { primary: "#0F3460", primaryDim: "#071A35", accent: "#7EC8E3", accentDim: "#3A7A99" },
+  madden: { primary: "#1A4731", primaryDim: "#0D2418", accent: "#E87722", accentDim: "#8A4210" },
+  mlb:    { primary: "#0C1E3C", primaryDim: "#060F1E", accent: "#C8102E", accentDim: "#7A0A1C" },
+};
+
+const SPORT_LABELS = {
+  nba:    "Daily NBA 2K Puzzle",
+  nhl:    "Daily NHL 26 Puzzle",
+  madden: "Daily Madden 26 Puzzle",
+  mlb:    "Daily MLB The Show 26",
+};
+
+let currentSport = localStorage.getItem("rebuildle_sport") || "nba";
+
+function applySportTheme(sport) {
+  const t = SPORT_THEMES[sport] || SPORT_THEMES.nba;
+  const r = document.documentElement.style;
+  r.setProperty("--primary",     t.primary);
+  r.setProperty("--primary-dim", t.primaryDim);
+  r.setProperty("--accent",      t.accent);
+  r.setProperty("--accent-dim",  t.accentDim);
+  document.getElementById("sport-label").textContent = SPORT_LABELS[sport] || sport;
+  document.querySelectorAll(".sport-option").forEach(el => {
+    el.classList.toggle("active", el.dataset.sport === sport);
+  });
+}
+
+// ── Sport selector dropdown ───────────────────────────────────────────────────
+const sportBtn      = document.getElementById("sport-selector-btn");
+const sportDropdown = document.getElementById("sport-dropdown");
+
+sportBtn.addEventListener("click", e => {
+  e.stopPropagation();
+  const open = sportDropdown.classList.toggle("open");
+  sportBtn.classList.toggle("open", open);
+});
+
+document.addEventListener("click", e => {
+  if (!document.getElementById("sport-selector").contains(e.target)) {
+    sportDropdown.classList.remove("open");
+    sportBtn.classList.remove("open");
+  }
+});
+
+document.querySelectorAll(".sport-option").forEach(el => {
+  el.addEventListener("click", () => {
+    const sport = el.dataset.sport;
+    sportDropdown.classList.remove("open");
+    sportBtn.classList.remove("open");
+    if (sport !== currentSport) {
+      currentSport = sport;
+      localStorage.setItem("rebuildle_sport", sport);
+      applySportTheme(sport);
+      switchSport();
+    }
+  });
+});
+
+async function switchSport() {
+  // Reset display
+  state = null;
+  players = [];
+  lastRenderedRevealCount = 0;
+  gameWasDone = false;
+  document.getElementById("target-section").innerHTML = "";
+  document.getElementById("guesses-section").innerHTML = "";
+  document.getElementById("end-msg").innerHTML = "";
+  document.getElementById("status-bar").textContent = "";
+  document.getElementById("guess-input").value = "";
+  document.getElementById("dropdown").style.display = "none";
+  // Clear date selector and reload
+  const sel = document.getElementById("day-select");
+  sel.innerHTML = "";
+  await Promise.all([loadPlayers(), loadState(), loadPastPuzzles()]);
+}
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+let currentUser = null;
+
+const loginOverlay = document.getElementById("login-overlay");
+const authBtn = document.getElementById("auth-btn");
+
+document.getElementById("login-close").addEventListener("click", () => loginOverlay.classList.remove("open"));
+loginOverlay.addEventListener("click", e => { if (e.target === loginOverlay) loginOverlay.classList.remove("open"); });
+document.getElementById("login-submit").addEventListener("click", doLogin);
+document.getElementById("login-password").addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
+
+function updateAuthUI() {
+  if (currentUser) {
+    authBtn.textContent = currentUser.username + " · Sign Out";
+    authBtn.onclick = doLogout;
+    let adminLink = document.getElementById("admin-nav-link");
+    if (currentUser.is_admin) {
+      if (!adminLink) {
+        adminLink = document.createElement("a");
+        adminLink.id = "admin-nav-link";
+        adminLink.href = "/admin/stats";
+        adminLink.textContent = "Admin";
+        adminLink.style.cssText = "font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--accent);text-decoration:none;letter-spacing:0.15em;text-transform:uppercase;margin-right:16px;";
+        authBtn.parentNode.insertBefore(adminLink, authBtn);
+      }
+    } else if (adminLink) {
+      adminLink.remove();
+    }
+  } else {
+    authBtn.textContent = "Sign In";
+    authBtn.onclick = () => loginOverlay.classList.add("open");
+    const adminLink = document.getElementById("admin-nav-link");
+    if (adminLink) adminLink.remove();
+  }
+}
+
+async function checkAuth() {
+  try {
+    const res = await fetch("/api/me");
+    const data = await res.json();
+    currentUser = data.guest ? null : data;
+  } catch(_) { currentUser = null; }
+  updateAuthUI();
+}
+
+async function doLogin() {
+  const username = document.getElementById("login-username").value.trim();
+  const password = document.getElementById("login-password").value;
+  const errEl = document.getElementById("login-error");
+  errEl.textContent = "";
+  if (!username || !password) { errEl.textContent = "Username and password required."; return; }
+  const res = await fetch("/api/login", {
+    method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({username, password}),
+  });
+  const data = await res.json();
+  if (!res.ok) { errEl.textContent = data.error || "Login failed."; return; }
+  loginOverlay.classList.remove("open");
+  document.getElementById("login-username").value = "";
+  document.getElementById("login-password").value = "";
+  await checkAuth();
+}
+
+async function doLogout() {
+  await fetch("/api/logout", {method: "POST"});
+  currentUser = null;
+  updateAuthUI();
+}
+
+// ── Game state ────────────────────────────────────────────────────────────────
+let players = [];
+let state = null;
+let lastRenderedRevealCount = 0;
+let gameWasDone = false;
+
+const NBA_LOGOS = {
+  ATL:"atl",BOS:"bos",BKN:"bkn",CHA:"cha",CHI:"chi",CLE:"cle",
+  DAL:"dal",DEN:"den",DET:"det",GSW:"gs",HOU:"hou",IND:"ind",
+  LAC:"lac",LAL:"lal",MEM:"mem",MIA:"mia",MIL:"mil",MIN:"min",
+  NOP:"no",NYK:"ny",OKC:"okc",ORL:"orl",PHI:"phi",PHX:"phx",
+  POR:"por",SAC:"sac",SAS:"sa",TOR:"tor",UTA:"utah",WAS:"wsh"
+};
+function teamLogoHtml(abbr) {
+  const slug = NBA_LOGOS[abbr];
+  if (!slug || currentSport !== "nba") return "";
+  return '<img src="https://a.espncdn.com/i/teamlogos/nba/500/' + slug + '.png" class="team-logo" alt="' + abbr + '">';
+}
+
+const overlay = document.getElementById("modal-overlay");
+document.getElementById("htp-btn").addEventListener("click", () => overlay.classList.add("open"));
+document.getElementById("modal-close").addEventListener("click", () => overlay.classList.remove("open"));
+overlay.addEventListener("click", e => { if (e.target === overlay) overlay.classList.remove("open"); });
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") {
+    overlay.classList.remove("open");
+    loginOverlay.classList.remove("open");
+    sportDropdown.classList.remove("open");
+    sportBtn.classList.remove("open");
+  }
+});
+
+function formatDate(d) {
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return months[d.getMonth()] + " " + d.getDate();
+}
+
+async function loadPastPuzzles() {
+  const sel = document.getElementById("day-select");
+  const todayOpt = document.createElement("option");
+  todayOpt.value = "today"; todayOpt.textContent = formatDate(new Date());
+  sel.appendChild(todayOpt);
+  try {
+    const res = await fetch(`/api/past-puzzles?sport=${currentSport}`);
+    const days = await res.json();
+    if (days.length) {
+      const divider = document.createElement("option");
+      divider.disabled = true; divider.textContent = "── Previous Days ──";
+      sel.appendChild(divider);
+      days.forEach(d => {
+        const opt = document.createElement("option");
+        opt.value = d.date; opt.textContent = d.label;
+        sel.appendChild(opt);
+      });
+    }
+  } catch(_) {}
+}
+
+document.getElementById("day-select").addEventListener("change", e => {
+  if (e.target.value && e.target.value !== "today") e.target.value = "today";
+});
+
+function pillClass(diff) {
+  const a = Math.abs(diff);
+  if (a <= 1) return "exact";
+  if (a <= 5) return "close";
+  if (a <= 10) return "warm";
+  return "cold";
+}
+function arrowFor(diff) {
+  if (Math.abs(diff) <= 1) return "=";
+  return diff > 0 ? "▼" : "▲";
+}
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+function render() {
+  const ts = document.getElementById("target-section");
+  const newRevealCount = state.revealedAttrs ? state.revealedAttrs.length : 0;
+  const newAttrAdded = newRevealCount > lastRenderedRevealCount;
+  const newAttrIdx = newRevealCount - 1;
+  const justEnded = state.done && !gameWasDone;
+  if (state.done) gameWasDone = true;
+
+  if (!state.revealedAttrs || state.revealedAttrs.length === 0) {
+    ts.innerHTML = "";
+  } else {
+    let html = "";
+    if (state.done && state.answer) {
+      const glowClass = justEnded ? " just-ended" : "";
+      html += '<div class="answer-revealed' + glowClass + '">';
+      html += '<span class="answer-name-display">' + escapeHtml(state.answer.name) + '</span>';
+      html += teamLogoHtml(state.answer.team);
+      if (state.won) {
+        html += '<span class="answer-sub win-sub">Solved in ' + state.guesses.length + ' / ' + state.maxGuesses + '</span>';
+      } else {
+        html += '<span class="answer-sub lose-sub">Out of guesses</span>';
+      }
+      html += '</div>';
+    }
+    html += '<div class="section-label">Today&rsquo;s player</div><div class="tile-row">';
+    state.revealedAttrs.forEach((attr, i) => {
+      const val = state.revealedValues[attr];
+      const label = state.attrLabels[attr];
+      const isNew = newAttrAdded && i === newAttrIdx;
+      html += '<div class="tile target' + (isNew ? ' tile-new' : '') + '"><div class="tile-val">' + val + '</div><div class="tile-label">' + escapeHtml(label) + '</div></div>';
+    });
+    html += '</div>';
+    ts.innerHTML = html;
+  }
+
+  const gs = document.getElementById("guesses-section");
+  let gHtml = "";
+  const totalGuesses = state.guesses.length;
+  state.guesses.forEach((g, idx) => {
+    const scale = Math.pow(0.925, (totalGuesses - 1) - idx);
+    const mb = Math.round(6 - (1 - scale) * 130);
+    gHtml += '<div class="guess-block" style="transform:scale(' + scale.toFixed(3) + ');transform-origin:top center;margin-bottom:' + mb + 'px;">';
+    gHtml += '<div class="guess-name">' + escapeHtml(g.name) + '<span class="guess-meta">' + escapeHtml(g.pos || "") + '</span>' + teamLogoHtml(g.team) + '</div>';
+    gHtml += '<div class="tile-row">';
+    state.revealedAttrs.forEach((attr, i) => {
+      const gv = g[attr] !== undefined ? g[attr] : 0;
+      const tv = state.revealedValues[attr];
+      const diff = gv - tv;
+      const isNew = newAttrAdded && i === newAttrIdx;
+      gHtml += '<div class="tile ' + pillClass(diff) + (isNew ? ' tile-new' : '') + '"><div class="tile-val">' + gv + '</div><div class="tile-arrow">' + arrowFor(diff) + '</div><div class="tile-label">' + escapeHtml(state.attrLabels[attr]) + '</div></div>';
+    });
+    gHtml += '</div></div>';
+  });
+  gs.innerHTML = gHtml;
+
+  const left = state.maxGuesses - state.guesses.length;
+  document.getElementById("status-bar").textContent = state.done ? "" : left + " guess" + (left === 1 ? "" : "es") + " remaining";
+  const em = document.getElementById("end-msg");
+  if (em) { em.className = ""; em.textContent = ""; }
+  document.getElementById("input-area").style.display = state.done ? "none" : "block";
+  lastRenderedRevealCount = newRevealCount;
+}
+
+async function loadState() {
+  const res = await fetch(`/api/state?sport=${currentSport}`);
+  state = await res.json();
+  render();
+}
+
+async function loadPlayers() {
+  const res = await fetch(`/api/players?sport=${currentSport}`);
+  players = await res.json();
+}
+
+async function submitGuess(name) {
+  const res = await fetch("/api/guess", {
+    method: "POST", headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({name, sport: currentSport}),
+  });
+  if (!res.ok) return;
+  state = await res.json();
+  document.getElementById("guess-input").value = "";
+  document.getElementById("dropdown").style.display = "none";
+  render();
+}
+
+const input    = document.getElementById("guess-input");
+const dropdown = document.getElementById("dropdown");
+
+input.addEventListener("input", () => {
+  const q = input.value.toLowerCase().trim();
+  if (!q || !state) { dropdown.style.display = "none"; return; }
+  const guessed = new Set(state.guesses.map(g => g.name));
+  const matches = players.filter(p => p.name.toLowerCase().includes(q) && !guessed.has(p.name)).slice(0, 6);
+  if (!matches.length) { dropdown.style.display = "none"; return; }
+  dropdown.innerHTML = matches.map(p =>
+    '<div class="dropdown-item" data-name="' + escapeHtml(p.name) + '">' +
+    escapeHtml(p.name) + '<span class="dropdown-team">' + escapeHtml(p.team) + " · " + escapeHtml(p.pos) + '</span></div>'
+  ).join("");
+  dropdown.style.display = "block";
+});
+
+dropdown.addEventListener("click", e => {
+  const item = e.target.closest(".dropdown-item");
+  if (item) submitGuess(item.dataset.name);
+});
+input.addEventListener("keydown", e => {
+  if (e.key === "Enter") { const first = dropdown.querySelector(".dropdown-item"); if (first) submitGuess(first.dataset.name); }
+  else if (e.key === "Escape") dropdown.style.display = "none";
+});
+document.addEventListener("click", e => {
+  if (!input.contains(e.target) && !dropdown.contains(e.target)) dropdown.style.display = "none";
+});
+
+// ── How to Play auto-open ─────────────────────────────────────────────────────
+// Bump HTP_VERSION to force all users to see the modal again on next visit.
+const HTP_VERSION = 2;
+
+function checkHtpSeen() {
+  const seen = parseInt(localStorage.getItem("rebuildle_htp_v") || "0");
+  if (seen < HTP_VERSION) {
+    overlay.classList.add("open");
+    localStorage.setItem("rebuildle_htp_v", String(HTP_VERSION));
+  }
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+(async () => {
+  applySportTheme(currentSport);
+  await Promise.all([loadPlayers(), loadState(), loadPastPuzzles(), checkAuth()]);
+  checkHtpSeen();
+})();
+</script>
+</body>
+</html>
