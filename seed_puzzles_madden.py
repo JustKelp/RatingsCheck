@@ -35,13 +35,15 @@ DATES = [
     "2026-05-19","2026-05-20","2026-05-21","2026-05-22","2026-05-23","2026-05-24",
 ]
 
-# Exactly 69 players (5 QB, 10 WR, 7 HB, 5 TE, 8 DE, 7 DT, 4 LB, 10 CB/S, 13 OL)
+# Exactly 69 players (7 QB, 10 WR, 9 HB, 7 TE, 8 DE, 7 DT, 6 LB, 10 CB/S, 4 OL, 1 K)
 PLAYER_REVEALS = [
-    # ── QBs (5) ──
+    # ── QBs (7) ──
     (616, ["agility","acceleration","catching","throwAccDeep","throwAccMed","throwUnderPressure","throwAccShort","throwPower"]),   # Josh Allen 99
     (618, ["strength","agility","throwAccDeep","throwUnderPressure","throwAccMed","throwAccShort","throwPower","speed"]),          # Lamar Jackson 99
     (628, ["agility","acceleration","throwPower","throwAccDeep","throwUnderPressure","throwAccMed","awareness","throwAccShort"]),  # Joe Burrow 97
     (643, ["agility","acceleration","throwAccDeep","throwUnderPressure","throwAccMed","throwPower","speed","throwAccShort"]),      # Mahomes 95
+    (717, ["agility","acceleration","throwAccDeep","throwUnderPressure","throwAccMed","throwPower","awareness","throwAccShort"]),  # Justin Herbert 88
+    (734, ["agility","speed","throwAccDeep","throwUnderPressure","throwAccMed","throwPower","throwAccShort","awareness"]),         # Jalen Hurts 87
     (705, ["agility","acceleration","catching","throwAccDeep","throwUnderPressure","throwAccMed","throwAccShort","throwPower"]),   # Stafford 89
     # ── WRs (10) ──
     (615, ["agility","strength","acceleration","catching","shortRoute","medRoute","release","deepRoute"]),                        # Ja'Marr Chase 99
@@ -54,7 +56,7 @@ PLAYER_REVEALS = [
     (660, ["agility","acceleration","strength","shortRoute","medRoute","deepRoute","release","catching"]),                        # Mike Evans 93
     (682, ["agility","acceleration","strength","shortRoute","medRoute","deepRoute","release","catching"]),                        # Drake London 91
     (695, ["agility","strength","acceleration","shortRoute","medRoute","deepRoute","release","catching"]),                        # Puka Nacua 90
-    # ── HBs (7) ──
+    # ── HBs (9) ──
     (621, ["agility","strength","acceleration","trucking","breakTackle","carrying","speed","jukeMoves"]),                         # Saquon Barkley 99
     (622, ["agility","acceleration","jukeMoves","carrying","breakTackle","speed","stiffArm","trucking"]),                         # Derrick Henry 98
     (639, ["agility","strength","acceleration","trucking","breakTackle","carrying","speed","jukeMoves"]),                         # Jahmyr Gibbs 95
@@ -62,12 +64,16 @@ PLAYER_REVEALS = [
     (668, ["agility","strength","acceleration","trucking","breakTackle","carrying","speed","jukeMoves"]),                         # Bijan Robinson 92
     (683, ["agility","strength","acceleration","trucking","breakTackle","carrying","jukeMoves","speed"]),                         # Joe Mixon 91
     (691, ["agility","strength","acceleration","jukeMoves","carrying","breakTackle","speed","trucking"]),                         # Josh Jacobs 90
-    # ── TEs (5) ──
+    (715, ["agility","strength","acceleration","trucking","breakTackle","carrying","speed","jukeMoves"]),                         # Jonathan Taylor 88
+    (718, ["agility","acceleration","jukeMoves","carrying","breakTackle","speed","stiffArm","trucking"]),                         # Kenneth Walker III 88
+    # ── TEs (7) ──
     (623, ["agility","strength","acceleration","shortRoute","medRoute","deepRoute","trucking","catching"]),                       # Kittle 98
     (663, ["agility","strength","acceleration","shortRoute","medRoute","deepRoute","awareness","catching"]),                      # Kelce 93
     (675, ["agility","strength","acceleration","shortRoute","medRoute","deepRoute","trucking","catching"]),                       # Trey McBride 92
     (678, ["agility","strength","acceleration","shortRoute","medRoute","deepRoute","speed","catching"]),                          # Brock Bowers 91
     (694, ["agility","strength","acceleration","shortRoute","medRoute","deepRoute","trucking","catching"]),                       # Mark Andrews 90
+    (723, ["agility","strength","acceleration","shortRoute","medRoute","deepRoute","trucking","catching"]),                       # T.J. Hockenson 88
+    (731, ["agility","strength","acceleration","shortRoute","medRoute","deepRoute","speed","catching"]),                          # Dallas Goedert 87
     # ── DEs / Pass Rushers (8) ──
     (620, ["agility","speed","tackle","hitPower","pursuit","blockShed","powerMoves","finesseMoves"]),                             # Myles Garrett 99
     (624, ["agility","strength","acceleration","tackle","hitPower","blockShed","powerMoves","finesseMoves"]),                     # Micah Parsons 98
@@ -85,11 +91,13 @@ PLAYER_REVEALS = [
     (665, ["agility","speed","tackle","hitPower","finesseMoves","blockShed","powerMoves","strength"]),                            # Vita Vea 93
     (671, ["agility","speed","tackle","hitPower","finesseMoves","blockShed","powerMoves","strength"]),                            # Jeffery Simmons 92
     (686, ["agility","speed","tackle","hitPower","finesseMoves","blockShed","powerMoves","strength"]),                            # Quinnen Williams 91
-    # ── LBs (4) ──
+    # ── LBs (6) ──
     (627, ["agility","speed","strength","hitPower","pursuit","tackle","manCoverage","awareness"]),                                # Fred Warner 97
     (653, ["agility","speed","strength","hitPower","pursuit","playRecog","awareness","tackle"]),                                  # Roquan Smith 94
     (677, ["agility","speed","strength","hitPower","pursuit","playRecog","awareness","tackle"]),                                  # Bobby Wagner 91
     (688, ["agility","speed","strength","hitPower","pursuit","playRecog","tackle","awareness"]),                                  # Demario Davis 90
+    (721, ["agility","speed","strength","hitPower","pursuit","playRecog","awareness","tackle"]),                                  # Lavonte David 88
+    (726, ["agility","speed","strength","hitPower","pursuit","playRecog","zoneCoverage","tackle"]),                               # Zack Baun 88
     # ── CBs / Safeties (10) ──
     (629, ["agility","strength","acceleration","tackle","hitPower","zoneCoverage","pressing","manCoverage"]),                     # Patrick Surtain II 97
     (637, ["strength","acceleration","tackle","hitPower","zoneCoverage","pressing","speed","manCoverage"]),                       # Christian Gonzalez 95
@@ -101,20 +109,13 @@ PLAYER_REVEALS = [
     (666, ["agility","strength","acceleration","tackle","hitPower","zoneCoverage","manCoverage","awareness"]),                    # Xavier McKinney 93
     (669, ["agility","strength","acceleration","tackle","hitPower","zoneCoverage","manCoverage","pursuit"]),                      # Budda Baker 92
     (672, ["agility","strength","acceleration","tackle","hitPower","zoneCoverage","pressing","manCoverage"]),                     # Marlon Humphrey 92
-    # ── OL (13) ──
+    # ── OL (4) ──
     (619, ["agility","speed","runBlock","passBlock","runBlockPow","passBlockFin","passBlockPow","strength"]),                     # Lane Johnson 99 RT
     (630, ["agility","speed","passBlock","runBlock","runBlockPow","passBlockFin","passBlockPow","strength"]),                     # Trent Williams 97 LT
     (633, ["agility","speed","passBlock","runBlock","runBlockPow","passBlockFin","passBlockPow","strength"]),                     # Penei Sewell 96 RT
     (635, ["agility","speed","passBlock","runBlock","runBlockPow","passBlockFin","passBlockPow","strength"]),                     # Tristan Wirfs 96 LT
-    (641, ["agility","speed","passBlock","runBlock","runBlockPow","passBlockFin","passBlockPow","strength"]),                     # Jordan Mailata 95 LT
-    (644, ["agility","speed","passBlock","runBlock","runBlockPow","passBlockFin","passBlockPow","strength"]),                     # Quinn Meinerz 95 RG
-    (647, ["agility","speed","passBlock","runBlock","runBlockPow","passBlockFin","strength","awareness"]),                        # Chris Lindstrom 94 RG
-    (649, ["agility","speed","passBlock","runBlock","runBlockPow","passBlockFin","strength","awareness"]),                        # Creed Humphrey 94 C
-    (652, ["agility","speed","passBlock","runBlock","runBlockPow","passBlockFin","passBlockPow","strength"]),                     # Laremy Tunsil 94 LT
-    (659, ["agility","speed","passBlock","runBlock","runBlockPow","passBlockFin","strength","awareness"]),                        # Joe Thuney 93 LG
-    (662, ["agility","speed","passBlock","runBlock","runBlockPow","passBlockFin","passBlockPow","strength"]),                     # Rashawn Slater 93 LT
-    (670, ["agility","speed","passBlock","runBlock","runBlockPow","passBlockFin","passBlockPow","strength"]),                     # Christian Darrisaw 92 LT
-    (674, ["agility","speed","passBlock","runBlock","runBlockPow","passBlockFin","passBlockPow","strength"]),                     # Quenton Nelson 92 LG
+    # ── K (1) ──
+    (728, ["agility","speed","awareness","stamina","strength","acceleration","kickAcc","kickPower"]),                             # Brandon Aubrey 87
 ]
 
 
@@ -138,8 +139,9 @@ def main():
         existing = cur.fetchone()
         if existing:
             ex_pid, ex_by = existing
-            if ex_pid != player_id:
-                skipped.append(f"  SKIP {date}: already has player_id={ex_pid} (created_by={ex_by})")
+            if ex_pid != player_id and ex_by != "seed":
+                # Admin-scheduled — preserve it
+                skipped.append(f"  SKIP {date}: admin-scheduled player_id={ex_pid}")
                 continue
         cur.execute(
             "INSERT OR REPLACE INTO daily_puzzles_madden (date, player_id, reveal_order_json, created_by) VALUES (?,?,?,?)",
