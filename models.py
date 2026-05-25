@@ -386,14 +386,13 @@ def save_daily_puzzle(
         return False
 
 
-def get_past_puzzles(limit: int = 30, sport: str = "nba") -> list[dict]:
+def get_past_puzzles(limit: int = 0, sport: str = "nba") -> list[dict]:
     pt, dt, _ = _sport_tables(sport)
     try:
         con = _con()
         rows = con.execute(
             f"SELECT dp.date, p.name FROM {dt} dp JOIN {pt} p ON p.id=dp.player_id "
-            "WHERE dp.date < date('now') ORDER BY dp.date DESC LIMIT ?",
-            (limit,),
+            "WHERE dp.date < date('now') ORDER BY dp.date DESC",
         ).fetchall()
         con.close()
         return [dict(r) for r in rows]

@@ -617,7 +617,7 @@ def api_guess():
 def api_past_puzzles():
     from datetime import date as _date
     sport = _parse_sport()
-    days = get_past_puzzles(100, sport)
+    days = get_past_puzzles(sport=sport)
     result = []
     for d in days:
         try:
