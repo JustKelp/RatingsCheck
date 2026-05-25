@@ -220,6 +220,7 @@ header::after {
 .tile.warm .tile-val, .tile.warm .tile-arrow { color: var(--warm-text); }
 .tile.cold { background: var(--cold-bg); border-color: var(--cold-border); }
 .tile.cold .tile-val, .tile.cold .tile-arrow { color: var(--cold-text); }
+.tile.ovr-tile .tile-val { font-size: 1.45rem; }
 
 .guess-block { margin-bottom: 14px; animation: slideIn 0.25s ease; }
 @keyframes slideIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
@@ -839,6 +840,13 @@ function arrowFor(diff) {
   if (Math.abs(diff) <= 1) return "=";
   return diff > 0 ? "▼" : "▲";
 }
+function ovrRangeLabel(range, targetOvr, done) {
+  if (done && targetOvr) return String(targetOvr);
+  if (!range || (range.lo === null && range.hi === null)) return "?";
+  if (range.lo !== null && range.hi !== null) return range.lo + "–" + range.hi;
+  if (range.hi !== null) return "≤ " + range.hi;
+  return "≥ " + range.lo;
+}
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 }
@@ -873,14 +881,18 @@ function render() {
       html += '</div>';
     }
     const dateLabel = currentViewDate ? formatDate(new Date(currentViewDate + "T12:00:00")) + " puzzle" : "Today’s player";
-    html += '<div class="section-label">' + dateLabel + '</div><div class="tile-row">';
+    html += ‘<div class="section-label">’ + dateLabel + ‘</div><div class="tile-row">’;
+    // OVR tile — shows narrowing range; green when game is over
+    const ovrLabel = ovrRangeLabel(state.ovrRange, state.targetOvr, state.done);
+    const ovrTileClass = state.done ? "exact" : "target";
+    html += ‘<div class="tile ‘ + ovrTileClass + ‘ ovr-tile"><div class="tile-val">’ + ovrLabel + ‘</div><div class="tile-label">OVR</div></div>’;
     state.revealedAttrs.forEach((attr, i) => {
       const val = state.revealedValues[attr];
       const label = state.attrLabels[attr];
       const isNew = newAttrAdded && i === newAttrIdx;
-      html += '<div class="tile target' + (isNew ? ' tile-new' : '') + '"><div class="tile-val">' + val + '</div><div class="tile-label">' + escapeHtml(label) + '</div></div>';
+      html += ‘<div class="tile target’ + (isNew ? ‘ tile-new’ : ‘’) + ‘"><div class="tile-val">’ + val + ‘</div><div class="tile-label">’ + escapeHtml(label) + ‘</div></div>’;
     });
-    html += '</div>';
+    html += ‘</div>’;
     ts.innerHTML = html;
   }
 
@@ -890,20 +902,26 @@ function render() {
   state.guesses.forEach((g, idx) => {
     const scale = Math.pow(0.925, (totalGuesses - 1) - idx);
     const mb = Math.round(6 - (1 - scale) * 130);
-    gHtml += '<div class="guess-block" style="transform:scale(' + scale.toFixed(3) + ');transform-origin:top center;margin-bottom:' + mb + 'px;">';
-    gHtml += '<div class="guess-name">' + escapeHtml(g.name)
-      + '<span class="hint-chip ' + (g.pos_hint || "cold") + '">' + escapeHtml(g.pos || "?") + '</span>'
-      + '<span class="hint-chip ' + (g.team_hint || "cold") + '">' + escapeHtml(g.team || "?") + '</span>'
-      + teamLogoHtml(g.team) + '</div>';
-    gHtml += '<div class="tile-row">';
+    gHtml += ‘<div class="guess-block" style="transform:scale(‘ + scale.toFixed(3) + ‘);transform-origin:top center;margin-bottom:’ + mb + ‘px;">’;
+    gHtml += ‘<div class="guess-name">’ + escapeHtml(g.name)
+      + ‘<span class="hint-chip ‘ + (g.pos_hint || "cold") + ‘">’ + escapeHtml(g.pos || "?") + ‘</span>’
+      + ‘<span class="hint-chip ‘ + (g.team_hint || "cold") + ‘">’ + escapeHtml(g.team || "?") + ‘</span>’
+      + teamLogoHtml(g.team) + ‘</div>’;
+    gHtml += ‘<div class="tile-row">’;
+    // OVR guess tile
+    const gOvr = g.overall || 0;
+    const ovrHint = g.ovr_hint || "cold";
+    const rawArrow = g.ovr_arrow || "";
+    const ovrArrow = rawArrow === "up" ? "▲" : rawArrow === "down" ? "▼" : rawArrow;
+    gHtml += ‘<div class="tile ‘ + ovrHint + ‘ ovr-tile"><div class="tile-val">’ + (gOvr || "?") + ‘</div><div class="tile-arrow">’ + ovrArrow + ‘</div><div class="tile-label">OVR</div></div>’;
     state.revealedAttrs.forEach((attr, i) => {
       const gv = g[attr] !== undefined ? g[attr] : 0;
       const tv = state.revealedValues[attr];
       const diff = gv - tv;
       const isNew = newAttrAdded && i === newAttrIdx;
-      gHtml += '<div class="tile ' + pillClass(diff) + (isNew ? ' tile-new' : '') + '"><div class="tile-val">' + gv + '</div><div class="tile-arrow">' + arrowFor(diff) + '</div><div class="tile-label">' + escapeHtml(state.attrLabels[attr]) + '</div></div>';
+      gHtml += ‘<div class="tile ‘ + pillClass(diff) + (isNew ? ‘ tile-new’ : ‘’) + ‘"><div class="tile-val">’ + gv + ‘</div><div class="tile-arrow">’ + arrowFor(diff) + ‘</div><div class="tile-label">’ + escapeHtml(state.attrLabels[attr]) + ‘</div></div>’;
     });
-    gHtml += '</div></div>';
+    gHtml += ‘</div></div>’;
   });
   gs.innerHTML = gHtml;
 

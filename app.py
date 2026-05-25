@@ -436,12 +436,39 @@ def serialize_state(sport: str = "nba", date_str: str | None = None) -> dict:
             if not player:
                 continue
             entry = {k: player.get(k, 0) for k in attr_keys}
-            entry["name"]  = player["name"]
-            entry["pos"]   = player.get("pos", player.get("position", ""))
-            entry["team"]  = player.get("team", "")
+            entry["name"]    = player["name"]
+            entry["pos"]     = player.get("pos", player.get("position", ""))
+            entry["team"]    = player.get("team", "")
+            entry["overall"] = player.get("overall", 0)
+        # back-fill overall for entries saved before this field was added
+        if "overall" not in entry:
+            p = find_player(entry.get("name", ""), sport)
+            entry["overall"] = p.get("overall", 0) if p else 0
         entry["pos_hint"]  = pos_hint(entry.get("pos", ""), target_pos, sport)
         entry["team_hint"] = team_hint(entry.get("team", ""), target_team, sport)
         guesses_out.append(entry)
+
+    # OVR range narrowing — track tightest bounds from all guesses
+    target_ovr = (target.get("overall", 0) if target else 0)
+    ovr_lo = ovr_hi = None
+    for entry in guesses_out:
+        g_ovr = entry.get("overall", 0)
+        if g_ovr and target_ovr:
+            diff = abs(g_ovr - target_ovr)
+            entry["ovr_hint"]  = (
+                "exact" if diff == 0 else
+                "close" if diff <= 3 else
+                "warm"  if diff <= 7 else
+                "cold"
+            )
+            entry["ovr_arrow"] = "=" if diff == 0 else ("down" if g_ovr > target_ovr else "up")
+            if g_ovr > target_ovr:
+                ovr_hi = g_ovr - 1 if ovr_hi is None else min(ovr_hi, g_ovr - 1)
+            elif g_ovr < target_ovr:
+                ovr_lo = g_ovr + 1 if ovr_lo is None else max(ovr_lo, g_ovr + 1)
+        else:
+            entry["ovr_hint"]  = "cold"
+            entry["ovr_arrow"] = ""
 
     return {
         "date": state["date"],
@@ -454,6 +481,8 @@ def serialize_state(sport: str = "nba", date_str: str | None = None) -> dict:
         "revealedValues": revealed_values,
         "attrLabels": attr_labels,
         "answer": target if state["done"] else None,
+        "ovrRange":  {"lo": ovr_lo, "hi": ovr_hi},
+        "targetOvr": target_ovr if state["done"] else None,
     }
 
 
@@ -593,9 +622,10 @@ def api_guess():
     puzzle = get_puzzle_for_date(date_str, sport)
     attr_keys = SPORT_ATTR_KEYS[sport]
     guess_entry = {k: player.get(k, 0) for k in attr_keys}
-    guess_entry["name"] = player["name"]
-    guess_entry["pos"]  = player.get("pos", player.get("position", ""))
-    guess_entry["team"] = player.get("team", "")
+    guess_entry["name"]    = player["name"]
+    guess_entry["pos"]     = player.get("pos", player.get("position", ""))
+    guess_entry["team"]    = player.get("team", "")
+    guess_entry["overall"] = player.get("overall", 0)
     state["guesses"].append(guess_entry)
 
     if player["name"] == puzzle["target"]:
