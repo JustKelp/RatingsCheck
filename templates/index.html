@@ -102,22 +102,22 @@ header::after {
 .sport-selector { position: relative; }
 
 .sport-selector-btn {
-  background: rgba(122,31,48,0.25); border: 1px solid var(--primary); border-left: 3px solid var(--primary);
+  background: var(--primary-dim); border: 1px solid var(--primary); border-left: 3px solid var(--accent);
   padding: 7px 26px 7px 10px; cursor: pointer;
   font-family: 'Oswald', sans-serif; font-size: 0.78rem; font-weight: 600;
-  letter-spacing: 0.08em; color: #E8A0A8; text-transform: uppercase;
-  display: flex; align-items: center; gap: 5px; transition: background 0.15s, color 0.15s;
+  letter-spacing: 0.08em; color: var(--accent); text-transform: uppercase;
+  display: flex; align-items: center; gap: 5px; transition: background 0.15s, border-color 0.15s, color 0.15s;
   clip-path: polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px);
   white-space: nowrap; position: relative;
 }
-.sport-selector-btn:hover { background: rgba(122,31,48,0.4); color: #F0C0C8; }
+.sport-selector-btn:hover { background: var(--primary); }
 .sport-caret { font-size: 0.65rem; transition: transform 0.15s; display: inline-block; position: absolute; right: 8px; }
 .sport-selector-btn.open .sport-caret { transform: rotate(180deg); }
 
 .sport-dropdown {
   position: absolute; top: calc(100% + 4px); right: 0; z-index: 300;
   background: var(--bg-elevated); border: 1px solid var(--border-strong);
-  border-left: 3px solid var(--primary); min-width: 180px;
+  border-left: 3px solid var(--accent); min-width: 180px;
   display: none; animation: fadeDown 0.12s ease;
 }
 .sport-dropdown.open { display: block; }
@@ -191,7 +191,7 @@ header::after {
 }
 
 .tile-row {
-  display: flex; gap: 7px; justify-content: center; flex-wrap: nowrap; overflow-x: auto;
+  display: flex; gap: 7px; justify-content: center; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden;
   margin-bottom: 6px; padding-bottom: 4px; -webkit-overflow-scrolling: touch;
   scrollbar-width: none; -ms-overflow-style: none;
 }
@@ -272,7 +272,7 @@ input.guess-input::placeholder { color: var(--text-dim); }
   .sport-selector-btn { font-size: 0.7rem; padding: 5px 22px 5px 8px; }
   .htp-btn { font-size: 0.68rem; padding: 5px 8px; }
   .container { padding: 24px 14px 80px; }
-  #ps-attrs { grid-template-columns: 1fr !important; }
+  input.guess-input { font-size: 16px; }
 }
 
 .modal-tabs { display: flex; border-bottom: 1px solid var(--border); }
@@ -288,22 +288,6 @@ input.guess-input::placeholder { color: var(--text-dim); }
 .modal-tab-panel { display: none; flex-direction: column; gap: 16px; }
 .modal-tab-panel.active { display: flex; }
 
-.player-name-link {
-  cursor: pointer; border-bottom: 1px dotted rgba(196,154,58,0.35);
-  transition: color 0.12s, border-color 0.12s;
-}
-.player-name-link:hover { color: var(--accent); border-bottom-color: var(--accent); }
-.answer-name-display.player-name-link { border-bottom-color: rgba(196,154,58,0.45); }
-
-.ps-attr-row {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 5px 0; border-bottom: 1px solid var(--border);
-}
-.ps-attr-label {
-  font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
-  color: var(--text-muted); letter-spacing: 0.04em; text-transform: uppercase;
-}
-.ps-attr-val { font-family: 'Oswald', sans-serif; font-size: 1rem; font-weight: 700; }
 </style>
 </head>
 <body>
@@ -413,20 +397,6 @@ input.guess-input::placeholder { color: var(--text-dim); }
   </div>
 </div>
 
-<div class="modal-overlay" id="player-overlay">
-  <div class="modal-card" style="max-width:560px;">
-    <div class="modal-header">
-      <div>
-        <div class="modal-title" id="ps-name"></div>
-        <div id="ps-meta" style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-muted);letter-spacing:0.15em;margin-top:5px;text-transform:uppercase;"></div>
-      </div>
-      <button class="modal-close" id="player-close">&times;</button>
-    </div>
-    <div class="modal-body" style="max-height:65vh;overflow-y:auto;padding-top:12px;padding-bottom:20px;gap:0;">
-      <div id="ps-attrs" style="display:grid;grid-template-columns:1fr 1fr;gap:0 20px;"></div>
-    </div>
-  </div>
-</div>
 
 <div class="modal-overlay" id="profile-overlay">
   <div class="modal-card" style="max-width:500px;">
@@ -658,26 +628,6 @@ async function doRegister() {
   await checkAuth();
 }
 
-// ── Player stats ──────────────────────────────────────────────────────────────
-const playerOverlay = document.getElementById("player-overlay");
-document.getElementById("player-close").addEventListener("click", () => playerOverlay.classList.remove("open"));
-playerOverlay.addEventListener("click", e => { if (e.target === playerOverlay) playerOverlay.classList.remove("open"); });
-
-async function openPlayerStats(name) {
-  const res = await fetch(`/api/player-stats?name=${encodeURIComponent(name)}&sport=${currentSport}`);
-  if (!res.ok) return;
-  const p = await res.json();
-  document.getElementById("ps-name").textContent = p.name;
-  document.getElementById("ps-meta").textContent = [p.team, p.position, "OVR " + p.overall].filter(Boolean).join(" · ");
-  const attrsEl = document.getElementById("ps-attrs");
-  attrsEl.innerHTML = Object.entries(p.attrs).map(([k, v]) => {
-    const label = (p.attrLabels && p.attrLabels[k]) || k;
-    const color = v >= 90 ? "var(--accent)" : v >= 80 ? "var(--exact-text)" : v >= 70 ? "var(--close-text)" : v >= 60 ? "var(--warm-text)" : "var(--cold-text)";
-    return '<div class="ps-attr-row"><span class="ps-attr-label">' + escapeHtml(label) + '</span><span class="ps-attr-val" style="color:' + color + ';">' + v + '</span></div>';
-  }).join("");
-  playerOverlay.classList.add("open");
-}
-
 // ── Profile ───────────────────────────────────────────────────────────────────
 const profileOverlay = document.getElementById("profile-overlay");
 document.getElementById("profile-close").addEventListener("click", () => profileOverlay.classList.remove("open"));
@@ -751,17 +701,48 @@ let state = null;
 let lastRenderedRevealCount = 0;
 let gameWasDone = false;
 
-const NBA_LOGOS = {
-  ATL:"atl",BOS:"bos",BKN:"bkn",CHA:"cha",CHI:"chi",CLE:"cle",
-  DAL:"dal",DEN:"den",DET:"det",GSW:"gs",HOU:"hou",IND:"ind",
-  LAC:"lac",LAL:"lal",MEM:"mem",MIA:"mia",MIL:"mil",MIN:"min",
-  NOP:"no",NYK:"ny",OKC:"okc",ORL:"orl",PHI:"phi",PHX:"phx",
-  POR:"por",SAC:"sac",SAS:"sa",TOR:"tor",UTA:"utah",WAS:"wsh"
+const TEAM_LOGOS = {
+  nba: {
+    ATL:"atl",BOS:"bos",BKN:"bkn",CHA:"cha",CHI:"chi",CLE:"cle",
+    DAL:"dal",DEN:"den",DET:"det",GSW:"gs",HOU:"hou",IND:"ind",
+    LAC:"lac",LAL:"lal",MEM:"mem",MIA:"mia",MIL:"mil",MIN:"min",
+    NOP:"no",NYK:"ny",OKC:"okc",ORL:"orl",PHI:"phi",PHX:"phx",
+    POR:"por",SAC:"sac",SAS:"sa",TOR:"tor",UTA:"utah",WAS:"wsh"
+  },
+  nhl: {
+    ANA:"ana",ARI:"ari",BOS:"bos",BUF:"buf",CAR:"car",CBJ:"cbj",
+    CGY:"cgy",CHI:"chi",COL:"col",DAL:"dal",DET:"det",EDM:"edm",
+    FLA:"fla",LAK:"lak",MIN:"min",MTL:"mtl",NJD:"njd",NSH:"nsh",
+    NYI:"nyi",NYR:"nyr",OTT:"ott",PHI:"phi",PIT:"pit",SEA:"sea",
+    SJS:"sj",STL:"stl",TBL:"tb",TOR:"tor",UTA:"utah",VAN:"van",
+    VGK:"vgk",WPG:"wpg",WSH:"wsh"
+  },
+  madden: {
+    ARI:"ari",ATL:"atl",BAL:"bal",BUF:"buf",CAR:"car",CHI:"chi",
+    CIN:"cin",CLE:"cle",DAL:"dal",DEN:"den",DET:"det",GB:"gb",
+    HOU:"hou",IND:"ind",JAX:"jax",KC:"kc",LAC:"lac",LAR:"lar",
+    LV:"lv",MIA:"mia",MIN:"min",NE:"ne",NO:"no",NYG:"nyg",
+    NYJ:"nyj",PHI:"phi",PIT:"pit",SEA:"sea",SF:"sf",TB:"tb",
+    TEN:"ten",WAS:"wsh",NY:"nyg"
+  },
+  mlb: {
+    ARI:"ari",ATL:"atl",BAL:"bal",BOS:"bos",CHC:"chc",CWS:"cws",
+    CIN:"cin",CLE:"cle",COL:"col",DET:"det",HOU:"hou",KC:"kc",
+    LAA:"laa",LAD:"lad",MIA:"mia",MIL:"mil",MIN:"min",NYM:"nym",
+    NYY:"nyy",OAK:"oak",PHI:"phi",PIT:"pit",SD:"sd",SEA:"sea",
+    SF:"sf",STL:"stl",TB:"tb",TEX:"tex",TOR:"tor",WSH:"wsh"
+  }
 };
+const SPORT_ESPN_LEAGUE = { nba:"nba", nhl:"nhl", madden:"nfl", mlb:"mlb" };
+
 function teamLogoHtml(abbr) {
-  const slug = NBA_LOGOS[abbr];
-  if (!slug || currentSport !== "nba") return "";
-  return '<img src="https://a.espncdn.com/i/teamlogos/nba/500/' + slug + '.png" class="team-logo" alt="' + abbr + '">';
+  if (!abbr) return "";
+  const logos = TEAM_LOGOS[currentSport];
+  if (!logos) return "";
+  const slug = logos[abbr];
+  if (!slug) return "";
+  const league = SPORT_ESPN_LEAGUE[currentSport];
+  return '<img src="https://a.espncdn.com/i/teamlogos/' + league + '/500/' + slug + '.png" class="team-logo" alt="' + abbr + '" onerror="this.style.display=\'none\'">';
 }
 
 const overlay = document.getElementById("modal-overlay");
@@ -772,7 +753,6 @@ document.addEventListener("keydown", e => {
   if (e.key === "Escape") {
     overlay.classList.remove("open");
     loginOverlay.classList.remove("open");
-    playerOverlay.classList.remove("open");
     profileOverlay.classList.remove("open");
     sportDropdown.classList.remove("open");
     sportBtn.classList.remove("open");
@@ -849,7 +829,7 @@ function render() {
     if (state.done && state.answer) {
       const glowClass = justEnded ? " just-ended" : "";
       html += '<div class="answer-revealed' + glowClass + '">';
-      html += '<span class="answer-name-display player-name-link" data-pname="' + escapeHtml(state.answer.name) + '">' + escapeHtml(state.answer.name) + '</span>';
+      html += '<span class="answer-name-display">' + escapeHtml(state.answer.name) + '</span>';
       html += teamLogoHtml(state.answer.team);
       if (state.won) {
         html += '<span class="answer-sub win-sub">Solved in ' + state.guesses.length + ' / ' + state.maxGuesses + '</span>';
@@ -877,7 +857,7 @@ function render() {
     const scale = Math.pow(0.925, (totalGuesses - 1) - idx);
     const mb = Math.round(6 - (1 - scale) * 130);
     gHtml += '<div class="guess-block" style="transform:scale(' + scale.toFixed(3) + ');transform-origin:top center;margin-bottom:' + mb + 'px;">';
-    gHtml += '<div class="guess-name"><span class="player-name-link" data-pname="' + escapeHtml(g.name) + '">' + escapeHtml(g.name) + '</span><span class="guess-meta">' + escapeHtml(g.pos || "") + '</span>' + teamLogoHtml(g.team) + '</div>';
+    gHtml += '<div class="guess-name">' + escapeHtml(g.name) + '<span class="guess-meta">' + escapeHtml(g.pos || "") + '</span>' + teamLogoHtml(g.team) + '</div>';
     gHtml += '<div class="tile-row">';
     state.revealedAttrs.forEach((attr, i) => {
       const gv = g[attr] !== undefined ? g[attr] : 0;
@@ -950,16 +930,6 @@ input.addEventListener("keydown", e => {
 });
 document.addEventListener("click", e => {
   if (!input.contains(e.target) && !dropdown.contains(e.target)) dropdown.style.display = "none";
-});
-
-// ── Player name click delegation ─────────────────────────────────────────────
-document.getElementById("guesses-section").addEventListener("click", e => {
-  const link = e.target.closest(".player-name-link");
-  if (link) openPlayerStats(link.dataset.pname);
-});
-document.getElementById("target-section").addEventListener("click", e => {
-  const link = e.target.closest(".player-name-link");
-  if (link) openPlayerStats(link.dataset.pname);
 });
 
 // ── How to Play auto-open ─────────────────────────────────────────────────────
