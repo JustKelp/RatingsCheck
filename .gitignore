@@ -40,6 +40,10 @@ dump_*.json
 *.png
 *.jpg
 Jcarl.jpg
+
+# Allow static assets
+!static/*.png
+!static/*.jpg
 check_*.py
 debug_*.py
 test_*.py
