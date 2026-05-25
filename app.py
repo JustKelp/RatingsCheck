@@ -31,7 +31,7 @@ from models import (
     apply_override, get_all_players, get_past_puzzles, get_player_by_id,
     get_today_puzzle_db, get_upcoming_puzzles, get_or_create_user_stats,
     get_user_sport_stats, init_db, migrate_db, save_daily_puzzle,
-    save_game_session, update_user_stats, upsert_player,
+    get_user_game_session, save_game_session, update_user_stats, upsert_player,
     pos_hint, team_hint,
 )
 
@@ -399,6 +399,20 @@ def get_state(sport: str = "nba", date_str: str | None = None) -> dict:
         session[key] = session.pop("game")
     if key not in session or (is_today and session[key].get("date") != today):
         session[key] = fresh_state(date_str)
+        # For past dates, restore completed game from DB for logged-in users
+        if not is_today:
+            user_id = session.get("user_id")
+            if user_id:
+                saved = get_user_game_session(user_id, sport, date_str)
+                if saved:
+                    puzzle = get_puzzle_for_date(date_str, sport)
+                    session[key] = {
+                        "date": date_str,
+                        "revealed": len(puzzle["revealOrder"]),
+                        "guesses": saved["guesses"],
+                        "done": True,
+                        "won": saved["won"],
+                    }
     return session[key]
 
 

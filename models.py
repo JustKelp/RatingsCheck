@@ -567,6 +567,24 @@ def get_or_create_user_stats(user_id: str) -> dict:
         }
 
 
+def get_user_game_session(user_id: str, sport: str, date_str: str) -> dict | None:
+    """Return saved completed game for a user/sport/date, or None if not found."""
+    _, _, st = _sport_tables(sport)
+    try:
+        con = _con()
+        row = con.execute(
+            f"SELECT guesses_json, won FROM {st} WHERE user_id=? AND date=? AND completed=1",
+            (user_id, date_str),
+        ).fetchone()
+        con.close()
+        if not row:
+            return None
+        return {"guesses": json.loads(row["guesses_json"]), "won": bool(row["won"])}
+    except Exception as exc:
+        print(f"[ERROR] get_user_game_session({user_id}, {sport}, {date_str}): {exc}")
+        return None
+
+
 def save_game_session(user_id: str, sport: str, date_str: str, won: bool, guess_names: list) -> bool:
     """Persist a completed game. Returns True if this is a new completion, False if replacing."""
     _, _, st = _sport_tables(sport)
