@@ -32,6 +32,7 @@ from models import (
     get_today_puzzle_db, get_upcoming_puzzles, get_or_create_user_stats,
     get_user_sport_stats, init_db, migrate_db, save_daily_puzzle,
     save_game_session, update_user_stats, upsert_player,
+    pos_hint, team_hint,
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -423,18 +424,24 @@ def serialize_state(sport: str = "nba", date_str: str | None = None) -> dict:
     revealed_attrs = puzzle["revealOrder"][:state["revealed"]]
     revealed_values = {a: (target.get(a, 0) if target else 0) for a in revealed_attrs}
 
+    target_pos  = (target.get("position") or target.get("pos") or "") if target else ""
+    target_team = (target.get("team") or "") if target else ""
+
     guesses_out = []
     for g in state["guesses"]:
         if isinstance(g, dict) and all(k in g for k in attr_keys):
-            guesses_out.append(g)
+            entry = dict(g)
         else:
             player = find_player(g if isinstance(g, str) else g.get("name", ""), sport)
-            if player:
-                entry = {k: player.get(k, 0) for k in attr_keys}
-                entry["name"] = player["name"]
-                entry["pos"] = player.get("pos", player.get("position", ""))
-                entry["team"] = player.get("team", "")
-                guesses_out.append(entry)
+            if not player:
+                continue
+            entry = {k: player.get(k, 0) for k in attr_keys}
+            entry["name"]  = player["name"]
+            entry["pos"]   = player.get("pos", player.get("position", ""))
+            entry["team"]  = player.get("team", "")
+        entry["pos_hint"]  = pos_hint(entry.get("pos", ""), target_pos, sport)
+        entry["team_hint"] = team_hint(entry.get("team", ""), target_team, sport)
+        guesses_out.append(entry)
 
     return {
         "date": state["date"],

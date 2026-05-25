@@ -223,9 +223,17 @@ header::after {
 @keyframes tileGlow { 0% { box-shadow: 0 0 0 0 rgba(196,154,58,0); } 25% { box-shadow: 0 0 14px 5px rgba(196,154,58,0.7); } 100% { box-shadow: 0 0 0 0 rgba(196,154,58,0); } }
 .tile-new { animation: tileGlow 2s ease-out; }
 @keyframes answerGlow { 0% { opacity: 0; transform: scale(0.95); text-shadow: none; } 30% { opacity: 1; transform: scale(1.03); text-shadow: 0 0 30px rgba(196,154,58,0.9), 0 0 60px rgba(196,154,58,0.4); } 100% { opacity: 1; transform: scale(1); text-shadow: 0 0 12px rgba(196,154,58,0.25); } }
-.guess-name { font-family: 'Oswald', sans-serif; font-size: 1.05rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; text-align: center; color: var(--text-primary); margin-bottom: 8px; }
-.guess-meta { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--text-muted); font-weight: 400; margin-left: 8px; letter-spacing: 0.05em; }
-.team-logo { width: 22px; height: 22px; object-fit: contain; vertical-align: middle; margin-left: 8px; opacity: 0.88; display: inline-block; }
+.guess-name { font-family: 'Oswald', sans-serif; font-size: 1.05rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; text-align: center; color: var(--text-primary); margin-bottom: 8px; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px; }
+.team-logo { width: 22px; height: 22px; object-fit: contain; vertical-align: middle; opacity: 0.88; display: inline-block; flex-shrink: 0; }
+.hint-chip {
+  display: inline-flex; align-items: center; padding: 2px 6px; flex-shrink: 0;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.62rem; font-weight: 700;
+  letter-spacing: 0.04em; text-transform: uppercase; border: 1px solid;
+  clip-path: polygon(3px 0, 100% 0, 100% calc(100% - 3px), calc(100% - 3px) 100%, 0 100%, 0 3px);
+}
+.hint-chip.exact { background: var(--exact-bg); border-color: var(--exact-border); color: var(--exact-text); }
+.hint-chip.close { background: var(--close-bg); border-color: var(--close-border); color: var(--close-text); }
+.hint-chip.cold  { background: var(--cold-bg);  border-color: var(--cold-border);  color: var(--cold-text); }
 
 .input-area { position: relative; margin: 28px 0 12px; }
 input.guess-input {
@@ -830,7 +838,12 @@ function render() {
       const glowClass = justEnded ? " just-ended" : "";
       html += '<div class="answer-revealed' + glowClass + '">';
       html += '<span class="answer-name-display">' + escapeHtml(state.answer.name) + '</span>';
-      html += teamLogoHtml(state.answer.team);
+      const ansPos  = state.answer.position || state.answer.pos || "";
+      const ansTeam = state.answer.team || "";
+      html += '<div style="margin-top:6px;display:flex;align-items:center;justify-content:center;gap:6px;">';
+      if (ansPos)  html += '<span class="hint-chip exact">' + escapeHtml(ansPos) + '</span>';
+      if (ansTeam) html += '<span class="hint-chip exact">' + escapeHtml(ansTeam) + '</span>';
+      html += teamLogoHtml(ansTeam) + '</div>';
       if (state.won) {
         html += '<span class="answer-sub win-sub">Solved in ' + state.guesses.length + ' / ' + state.maxGuesses + '</span>';
       } else {
@@ -857,7 +870,10 @@ function render() {
     const scale = Math.pow(0.925, (totalGuesses - 1) - idx);
     const mb = Math.round(6 - (1 - scale) * 130);
     gHtml += '<div class="guess-block" style="transform:scale(' + scale.toFixed(3) + ');transform-origin:top center;margin-bottom:' + mb + 'px;">';
-    gHtml += '<div class="guess-name">' + escapeHtml(g.name) + '<span class="guess-meta">' + escapeHtml(g.pos || "") + '</span>' + teamLogoHtml(g.team) + '</div>';
+    gHtml += '<div class="guess-name">' + escapeHtml(g.name)
+      + '<span class="hint-chip ' + (g.pos_hint || "cold") + '">' + escapeHtml(g.pos || "?") + '</span>'
+      + '<span class="hint-chip ' + (g.team_hint || "cold") + '">' + escapeHtml(g.team || "?") + '</span>'
+      + teamLogoHtml(g.team) + '</div>';
     gHtml += '<div class="tile-row">';
     state.revealedAttrs.forEach((attr, i) => {
       const gv = g[attr] !== undefined ? g[attr] : 0;

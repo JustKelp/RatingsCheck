@@ -110,6 +110,99 @@ ATTR_KEYS = NBA_ATTR_KEYS
 
 VALID_SPORTS = frozenset(SPORT_ATTR_KEYS)
 
+# ── Position groups for hint computation ─────────────────────────────────────
+_POS_GROUPS: dict[str, dict[str, str]] = {
+    "nba": {
+        "PG": "guard", "SG": "guard",
+        "SF": "forward", "PF": "forward",
+        "C": "center",
+    },
+    "nhl": {
+        "C": "forward", "LW": "forward", "RW": "forward",
+        "D": "defense", "LD": "defense", "RD": "defense",
+    },
+    "madden": {
+        "QB": "qb",
+        "WR": "skill", "HB": "skill", "FB": "skill", "TE": "skill",
+        "LT": "ol", "RT": "ol", "LG": "ol", "RG": "ol", "C": "ol", "G": "ol", "T": "ol",
+        "LE": "dl", "RE": "dl", "DE": "dl", "DT": "dl", "NT": "dl",
+        "MLB": "lb", "OLB": "lb", "LOLB": "lb", "ROLB": "lb", "LB": "lb",
+        "CB": "db", "SS": "db", "FS": "db", "S": "db",
+    },
+    "mlb": {
+        "SP": "pitcher", "RP": "pitcher", "CP": "pitcher",
+        "C": "catcher",
+        "1B": "infield", "2B": "infield", "3B": "infield", "SS": "infield",
+        "LF": "outfield", "CF": "outfield", "RF": "outfield", "DH": "outfield",
+    },
+}
+
+# ── Conference / league mappings for team hint ────────────────────────────────
+_CONFERENCES: dict[str, dict[str, str]] = {
+    "nba": {
+        "ATL": "east", "BOS": "east", "BKN": "east", "CHA": "east", "CHI": "east",
+        "CLE": "east", "DET": "east", "IND": "east", "MIA": "east", "MIL": "east",
+        "NYK": "east", "ORL": "east", "PHI": "east", "TOR": "east", "WAS": "east",
+        "DAL": "west", "DEN": "west", "GSW": "west", "HOU": "west", "LAC": "west",
+        "LAL": "west", "MEM": "west", "MIN": "west", "NOP": "west", "OKC": "west",
+        "PHX": "west", "POR": "west", "SAC": "west", "SAS": "west", "UTA": "west",
+    },
+    "nhl": {
+        "BOS": "east", "BUF": "east", "CAR": "east", "CBJ": "east", "DET": "east",
+        "FLA": "east", "MTL": "east", "NJD": "east", "NYI": "east", "NYR": "east",
+        "OTT": "east", "PHI": "east", "PIT": "east", "TBL": "east", "TOR": "east",
+        "WSH": "east",
+        "ANA": "west", "ARI": "west", "CGY": "west", "CHI": "west", "COL": "west",
+        "DAL": "west", "EDM": "west", "LAK": "west", "MIN": "west", "NSH": "west",
+        "SEA": "west", "SJS": "west", "STL": "west", "UTA": "west", "VAN": "west",
+        "VGK": "west", "WPG": "west",
+    },
+    "madden": {
+        "BAL": "afc", "BUF": "afc", "CIN": "afc", "CLE": "afc", "DEN": "afc",
+        "HOU": "afc", "IND": "afc", "JAX": "afc", "KC": "afc", "LAC": "afc",
+        "LV": "afc", "MIA": "afc", "NE": "afc", "NYJ": "afc", "PIT": "afc",
+        "TEN": "afc",
+        "ARI": "nfc", "ATL": "nfc", "CAR": "nfc", "CHI": "nfc", "DAL": "nfc",
+        "DET": "nfc", "GB": "nfc", "LAR": "nfc", "MIN": "nfc", "NO": "nfc",
+        "NYG": "nfc", "PHI": "nfc", "SEA": "nfc", "SF": "nfc", "TB": "nfc",
+        "WAS": "nfc",
+    },
+    "mlb": {
+        "BAL": "al", "BOS": "al", "CWS": "al", "CLE": "al", "DET": "al",
+        "HOU": "al", "KC": "al", "LAA": "al", "MIN": "al", "NYY": "al",
+        "OAK": "al", "SEA": "al", "TB": "al", "TEX": "al", "TOR": "al",
+        "ARI": "nl", "ATL": "nl", "CHC": "nl", "CIN": "nl", "COL": "nl",
+        "LAD": "nl", "MIA": "nl", "MIL": "nl", "NYM": "nl", "PHI": "nl",
+        "PIT": "nl", "SD": "nl", "SF": "nl", "STL": "nl", "WSH": "nl",
+    },
+}
+
+
+def pos_hint(guess_pos: str, answer_pos: str, sport: str) -> str:
+    """Return 'exact', 'close', or 'cold' for position comparison."""
+    gp = (guess_pos or "").upper().strip()
+    ap = (answer_pos or "").upper().strip()
+    if not gp or not ap:
+        return "cold"
+    if gp == ap:
+        return "exact"
+    groups = _POS_GROUPS.get(sport, {})
+    return "close" if groups.get(gp, gp) == groups.get(ap, ap) else "cold"
+
+
+def team_hint(guess_team: str, answer_team: str, sport: str) -> str:
+    """Return 'exact', 'close', or 'cold' for team comparison."""
+    gt = (guess_team or "").upper().strip()
+    at = (answer_team or "").upper().strip()
+    if not gt or not at:
+        return "cold"
+    if gt == at:
+        return "exact"
+    conf_map = _CONFERENCES.get(sport, {})
+    g_conf = conf_map.get(gt, "")
+    a_conf = conf_map.get(at, "")
+    return "close" if g_conf and a_conf and g_conf == a_conf else "cold"
+
 
 def _sport_tables(sport: str) -> tuple[str, str, str]:
     """Return (players_table, puzzles_table, sessions_table) for a sport."""
