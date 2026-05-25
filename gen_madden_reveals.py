@@ -138,18 +138,26 @@ def z_score(val, mean, std):
     return (val - mean) / std
 
 
+MIN_ATTR_VAL = 60  # attributes below this are noise (e.g. kicker strength=49)
+
 def build_reveal(player, group_name, all_players):
     attrs = GROUP_ATTRS[group_name]
     means, stds = group_stats(all_players, group_name, attrs)
 
-    # Only use attrs where the player has a non-zero value
-    scored = []
-    for attr in attrs:
-        val = player.get(attr) or 0
-        if val == 0:
-            continue
-        z = abs(z_score(val, means[attr], stds[attr]))
-        scored.append((attr, z))
+    def score_attrs(apply_min):
+        out = []
+        for attr in attrs:
+            val = player.get(attr) or 0
+            if val == 0:
+                continue
+            if apply_min and val < MIN_ATTR_VAL:
+                continue
+            out.append((attr, abs(z_score(val, means[attr], stds[attr]))))
+        return out
+
+    scored = score_attrs(apply_min=True)
+    if len(scored) < 6:        # fallback: relax if too few pass threshold
+        scored = score_attrs(apply_min=False)
 
     # Sort by |z|
     scored.sort(key=lambda x: x[1])

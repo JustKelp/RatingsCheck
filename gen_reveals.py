@@ -187,17 +187,33 @@ def group_stats(players, group_name, attrs, group_fn):
     return means, stds
 
 
-def build_reveal(player, group_name, group_attrs, group_fn, all_players):
+def build_reveal(player, group_name, group_attrs, group_fn, all_players,
+                 min_val=0, no_min_attrs=frozenset()):
+    """
+    Build an 8-slot reveal order sorted low→high |z|.
+    Attributes whose value is below min_val are excluded unless the attr is in
+    no_min_attrs (useful for rate stats and deliberately low values like stamina
+    for closers).  If fewer than 6 attrs survive the filter, fall back to
+    all non-zero values so we always fill 8 slots.
+    """
     attrs = group_attrs[group_name]
     means, stds = group_stats(all_players, group_name, attrs, group_fn)
 
-    scored = []
-    for attr in attrs:
-        val = player.get(attr) or 0
-        if val == 0:
-            continue
-        z = abs((val - means[attr]) / stds[attr])
-        scored.append((attr, z))
+    def score_attrs(candidates, apply_min):
+        out = []
+        for attr in candidates:
+            val = player.get(attr) or 0
+            if val == 0:
+                continue
+            if apply_min and attr not in no_min_attrs and val < min_val:
+                continue
+            z = abs((val - means[attr]) / stds[attr])
+            out.append((attr, z))
+        return out
+
+    scored = score_attrs(attrs, apply_min=True)
+    if len(scored) < 6:                          # fallback: relax threshold
+        scored = score_attrs(attrs, apply_min=False)
 
     scored.sort(key=lambda x: x[1])
     n = len(scored)
@@ -225,7 +241,14 @@ def build_reveal(player, group_name, group_attrs, group_fn, all_players):
     return reveal
 
 
-def generate(sport, table, puzzle_ids, group_fn, group_attrs, all_players, show_diagnostic=True):
+def generate(sport, table, puzzle_ids, group_fn, group_attrs, all_players,
+             min_val=0, no_min_attrs=frozenset(),
+             group_min_val=None, group_no_min_attrs=None,
+             show_diagnostic=True):
+    """
+    group_min_val / group_no_min_attrs: per-group overrides (dict keyed by group name).
+    Falls back to the flat min_val / no_min_attrs for groups not listed.
+    """
     print(f"\n\n# {'═'*60}")
     print(f"# {sport.upper()} PLAYER_REVEALS")
     print(f"# {'═'*60}")
@@ -245,7 +268,10 @@ def generate(sport, table, puzzle_ids, group_fn, group_attrs, all_players, show_
             print(f"    # WARNING: player_id={pid} '{p.get('name')}' pos='{pos}' — no group, skipped")
             continue
 
-        reveal = build_reveal(p, group, group_attrs, group_fn, all_players)
+        gmv  = (group_min_val  or {}).get(group, min_val)
+        gnma = (group_no_min_attrs or {}).get(group, no_min_attrs)
+        reveal = build_reveal(p, group, group_attrs, group_fn, all_players,
+                              min_val=gmv, no_min_attrs=gnma)
         ovr = p.get("overall", "?")
         name = p.get("name", "?")
         team = p.get("team", "?")
@@ -285,16 +311,24 @@ def main():
     for sport in sports:
         if sport == "nhl":
             players = load_table(conn, NHL_TABLE)
-            generate("nhl", NHL_TABLE, NHL_PUZZLE_IDS, nhl_group, NHL_GROUP_ATTRS, players)
+            generate("nhl", NHL_TABLE, NHL_PUZZLE_IDS, nhl_group, NHL_GROUP_ATTRS, players,
+                     min_val=68)  # filters faceoffs=55 for D/wingers, fighting=63 for skill players
         elif sport == "mlb":
             players = load_table(conn, MLB_TABLE)
-            generate("mlb", MLB_TABLE, MLB_PUZZLE_IDS, mlb_group, MLB_GROUP_ATTRS, players)
+            generate("mlb", MLB_TABLE, MLB_PUZZLE_IDS, mlb_group, MLB_GROUP_ATTRS, players,
+                     min_val=50,  # hitter/catcher default
+                     group_min_val={"pitcher": 50},
+                     group_no_min_attrs={
+                         # stamina=25 for closers IS the clue; rate stats have no useful floor
+                         "pitcher": {"bbPerBf", "hrPerBf", "stamina"},
+                     })
         elif sport == "nba":
             if not NBA_PUZZLE_IDS:
                 print("\n# NBA: no PUZZLE_IDS defined — add player IDs to NBA_PUZZLE_IDS in gen_reveals.py")
             else:
                 players = load_table(conn, NBA_TABLE)
-                generate("nba", NBA_TABLE, NBA_PUZZLE_IDS, nba_group, NBA_GROUP_ATTRS, players)
+                generate("nba", NBA_TABLE, NBA_PUZZLE_IDS, nba_group, NBA_GROUP_ATTRS, players,
+                         min_val=60)
         else:
             print(f"Unknown sport: {sport}. Use nhl, mlb, nba, or all.")
 
