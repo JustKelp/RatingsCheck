@@ -136,44 +136,69 @@ _POS_GROUPS: dict[str, dict[str, str]] = {
     },
 }
 
-# ── Conference / league mappings for team hint ────────────────────────────────
-_CONFERENCES: dict[str, dict[str, str]] = {
+# ── Division mappings for team hint (team → division code) ───────────────────
+_DIVISIONS: dict[str, dict[str, str]] = {
     "nba": {
-        "ATL": "east", "BOS": "east", "BKN": "east", "CHA": "east", "CHI": "east",
-        "CLE": "east", "DET": "east", "IND": "east", "MIA": "east", "MIL": "east",
-        "NYK": "east", "ORL": "east", "PHI": "east", "TOR": "east", "WAS": "east",
-        "DAL": "west", "DEN": "west", "GSW": "west", "HOU": "west", "LAC": "west",
-        "LAL": "west", "MEM": "west", "MIN": "west", "NOP": "west", "OKC": "west",
-        "PHX": "west", "POR": "west", "SAC": "west", "SAS": "west", "UTA": "west",
+        # Atlantic (East)
+        "BOS": "atlantic", "BKN": "atlantic", "NYK": "atlantic", "PHI": "atlantic", "TOR": "atlantic",
+        # Central (East)
+        "CHI": "central",  "CLE": "central",  "DET": "central",  "IND": "central",  "MIL": "central",
+        # Southeast (East)
+        "ATL": "southeast","CHA": "southeast","MIA": "southeast","ORL": "southeast","WAS": "southeast",
+        # Northwest (West)
+        "DEN": "northwest","MIN": "northwest","OKC": "northwest","POR": "northwest","UTA": "northwest",
+        # Pacific (West)
+        "GSW": "pacific",  "LAC": "pacific",  "LAL": "pacific",  "PHX": "pacific",  "SAC": "pacific",
+        # Southwest (West)
+        "DAL": "southwest","HOU": "southwest","MEM": "southwest","NOP": "southwest","SAS": "southwest",
     },
     "nhl": {
-        "BOS": "east", "BUF": "east", "CAR": "east", "CBJ": "east", "DET": "east",
-        "FLA": "east", "MTL": "east", "NJD": "east", "NYI": "east", "NYR": "east",
-        "OTT": "east", "PHI": "east", "PIT": "east", "TBL": "east", "TOR": "east",
-        "WSH": "east",
-        "ANA": "west", "ARI": "west", "CGY": "west", "CHI": "west", "COL": "west",
-        "DAL": "west", "EDM": "west", "LAK": "west", "MIN": "west", "NSH": "west",
-        "SEA": "west", "SJS": "west", "STL": "west", "UTA": "west", "VAN": "west",
-        "VGK": "west", "WPG": "west",
+        # Atlantic (East)
+        "BOS": "nhl_atl", "BUF": "nhl_atl", "DET": "nhl_atl", "FLA": "nhl_atl",
+        "MTL": "nhl_atl", "OTT": "nhl_atl", "TBL": "nhl_atl", "TOR": "nhl_atl",
+        # Metropolitan (East)
+        "CAR": "metro",   "CBJ": "metro",   "NJD": "metro",   "NYI": "metro",
+        "NYR": "metro",   "PHI": "metro",   "PIT": "metro",   "WSH": "metro",
+        # Central (West)
+        "ARI": "central", "UTA": "central", "CHI": "central", "COL": "central",
+        "DAL": "central", "MIN": "central", "NSH": "central", "STL": "central", "WPG": "central",
+        # Pacific (West)
+        "ANA": "nhl_pac", "CGY": "nhl_pac", "EDM": "nhl_pac", "LAK": "nhl_pac",
+        "SEA": "nhl_pac", "SJS": "nhl_pac", "VAN": "nhl_pac", "VGK": "nhl_pac",
     },
     "madden": {
-        "BAL": "afc", "BUF": "afc", "CIN": "afc", "CLE": "afc", "DEN": "afc",
-        "HOU": "afc", "IND": "afc", "JAX": "afc", "KC": "afc", "LAC": "afc",
-        "LV": "afc", "MIA": "afc", "NE": "afc", "NYJ": "afc", "PIT": "afc",
-        "TEN": "afc",
-        "ARI": "nfc", "ATL": "nfc", "CAR": "nfc", "CHI": "nfc", "DAL": "nfc",
-        "DET": "nfc", "GB": "nfc", "LAR": "nfc", "MIN": "nfc", "NO": "nfc",
-        "NYG": "nfc", "PHI": "nfc", "SEA": "nfc", "SF": "nfc", "TB": "nfc",
-        "WAS": "nfc",
+        # AFC
+        "BUF": "afc_east", "MIA": "afc_east", "NE": "afc_east",  "NYJ": "afc_east",
+        "BAL": "afc_north","CIN": "afc_north","CLE": "afc_north","PIT": "afc_north",
+        "HOU": "afc_south","IND": "afc_south","JAX": "afc_south","TEN": "afc_south",
+        "DEN": "afc_west", "KC":  "afc_west", "LAC": "afc_west", "LV":  "afc_west",
+        # NFC
+        "DAL": "nfc_east", "NYG": "nfc_east", "PHI": "nfc_east", "WAS": "nfc_east",
+        "CHI": "nfc_north","DET": "nfc_north","GB":  "nfc_north","MIN": "nfc_north",
+        "ATL": "nfc_south","CAR": "nfc_south","NO":  "nfc_south","TB":  "nfc_south",
+        "ARI": "nfc_west", "LAR": "nfc_west", "SEA": "nfc_west", "SF":  "nfc_west",
     },
     "mlb": {
-        "BAL": "al", "BOS": "al", "CWS": "al", "CLE": "al", "DET": "al",
-        "HOU": "al", "KC": "al", "LAA": "al", "MIN": "al", "NYY": "al",
-        "OAK": "al", "SEA": "al", "TB": "al", "TEX": "al", "TOR": "al",
-        "ARI": "nl", "ATL": "nl", "CHC": "nl", "CIN": "nl", "COL": "nl",
-        "LAD": "nl", "MIA": "nl", "MIL": "nl", "NYM": "nl", "PHI": "nl",
-        "PIT": "nl", "SD": "nl", "SF": "nl", "STL": "nl", "WSH": "nl",
+        # AL
+        "BAL": "al_east",    "BOS": "al_east",    "NYY": "al_east",    "TB":  "al_east",  "TOR": "al_east",
+        "CWS": "al_central", "CLE": "al_central", "DET": "al_central", "KC":  "al_central","MIN": "al_central",
+        "HOU": "al_west",    "LAA": "al_west",    "OAK": "al_west",    "SEA": "al_west",  "TEX": "al_west",
+        # NL
+        "ATL": "nl_east",    "MIA": "nl_east",    "NYM": "nl_east",    "PHI": "nl_east",  "WSH": "nl_east",
+        "CHC": "nl_central", "CIN": "nl_central", "MIL": "nl_central", "PIT": "nl_central","STL": "nl_central",
+        "ARI": "nl_west",    "COL": "nl_west",    "LAD": "nl_west",    "SD":  "nl_west",  "SF":  "nl_west",
     },
+}
+
+# Division → conference
+_DIV_CONF: dict[str, dict[str, str]] = {
+    "nba":    {"atlantic": "east", "central": "east", "southeast": "east",
+               "northwest": "west", "pacific": "west", "southwest": "west"},
+    "nhl":    {"nhl_atl": "east", "metro": "east", "central": "west", "nhl_pac": "west"},
+    "madden": {"afc_east": "afc", "afc_north": "afc", "afc_south": "afc", "afc_west": "afc",
+               "nfc_east": "nfc", "nfc_north": "nfc", "nfc_south": "nfc", "nfc_west": "nfc"},
+    "mlb":    {"al_east": "al", "al_central": "al", "al_west": "al",
+               "nl_east": "nl", "nl_central": "nl", "nl_west": "nl"},
 }
 
 
@@ -190,17 +215,22 @@ def pos_hint(guess_pos: str, answer_pos: str, sport: str) -> str:
 
 
 def team_hint(guess_team: str, answer_team: str, sport: str) -> str:
-    """Return 'exact', 'close', or 'cold' for team comparison."""
+    """Return 'exact', 'close' (same div), 'warm' (same conf), or 'cold'."""
     gt = (guess_team or "").upper().strip()
     at = (answer_team or "").upper().strip()
     if not gt or not at:
         return "cold"
     if gt == at:
         return "exact"
-    conf_map = _CONFERENCES.get(sport, {})
-    g_conf = conf_map.get(gt, "")
-    a_conf = conf_map.get(at, "")
-    return "close" if g_conf and a_conf and g_conf == a_conf else "cold"
+    div_map  = _DIVISIONS.get(sport, {})
+    conf_map = _DIV_CONF.get(sport, {})
+    g_div = div_map.get(gt, "")
+    a_div = div_map.get(at, "")
+    if g_div and a_div and g_div == a_div:
+        return "close"
+    g_conf = conf_map.get(g_div, "")
+    a_conf = conf_map.get(a_div, "")
+    return "warm" if g_conf and a_conf and g_conf == a_conf else "cold"
 
 
 def _sport_tables(sport: str) -> tuple[str, str, str]:
