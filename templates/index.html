@@ -252,7 +252,38 @@ input.guess-input::placeholder { color: var(--text-dim); }
   .tile-label { font-size: 0.54rem; max-width: 62px; }
   .logo { font-size: 1.7rem; }
   .container { padding: 24px 14px 80px; }
+  #ps-attrs { grid-template-columns: 1fr !important; }
 }
+
+.modal-tabs { display: flex; border-bottom: 1px solid var(--border); }
+.modal-tab {
+  flex: 1; padding: 13px 12px; cursor: pointer; text-align: center;
+  font-family: 'Oswald', sans-serif; font-size: 0.88rem; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted);
+  background: none; outline: none; border: none; border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s; margin-bottom: -1px;
+}
+.modal-tab:hover { color: var(--text-primary); }
+.modal-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.modal-tab-panel { display: none; flex-direction: column; gap: 16px; }
+.modal-tab-panel.active { display: flex; }
+
+.player-name-link {
+  cursor: pointer; border-bottom: 1px dotted rgba(196,154,58,0.35);
+  transition: color 0.12s, border-color 0.12s;
+}
+.player-name-link:hover { color: var(--accent); border-bottom-color: var(--accent); }
+.answer-name-display.player-name-link { border-bottom-color: rgba(196,154,58,0.45); }
+
+.ps-attr-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 5px 0; border-bottom: 1px solid var(--border);
+}
+.ps-attr-label {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+  color: var(--text-muted); letter-spacing: 0.04em; text-transform: uppercase;
+}
+.ps-attr-val { font-family: 'Oswald', sans-serif; font-size: 1rem; font-weight: 700; }
 </style>
 </head>
 <body>
@@ -317,23 +348,90 @@ input.guess-input::placeholder { color: var(--text-dim); }
 <div class="modal-overlay" id="login-overlay">
   <div class="modal-card">
     <div class="modal-header">
-      <div class="modal-title">Sign In</div>
+      <div class="modal-title">Account</div>
       <button class="modal-close" id="login-close">&times;</button>
     </div>
+    <div class="modal-tabs">
+      <button class="modal-tab active" id="tab-signin" onclick="switchAuthTab('signin')">Sign In</button>
+      <button class="modal-tab" id="tab-register" onclick="switchAuthTab('register')">Create Account</button>
+    </div>
     <div class="modal-body">
-      <div class="modal-rule">Use your <strong>StatCheck</strong> username and password.</div>
-      <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px;">
-        <input type="text" id="login-username" placeholder="Username" autocomplete="username"
-               class="guess-input" style="margin:0;border-left-color:var(--border-strong);">
-        <input type="password" id="login-password" placeholder="Password" autocomplete="current-password"
-               class="guess-input" style="margin:0;border-left-color:var(--border-strong);">
-        <p id="login-error" style="color:var(--warm-text);font-size:0.82rem;min-height:1.1em;margin:0;font-family:'JetBrains Mono',monospace;letter-spacing:0.03em;"></p>
-        <button id="login-submit"
-                style="padding:13px;background:var(--primary);color:var(--text-primary);border:none;cursor:pointer;
-                       font-family:'Oswald',sans-serif;font-size:0.95rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;
-                       clip-path:polygon(5px 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%,0 5px);
-                       transition:background 0.15s;">Log In</button>
+      <div class="modal-tab-panel active" id="panel-signin">
+        <div class="modal-rule">Sign in with your <strong>StatCheck</strong> or <strong>Rebuildle</strong> account.</div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px;">
+          <input type="text" id="login-username" placeholder="Username" autocomplete="username"
+                 class="guess-input" style="margin:0;border-left-color:var(--border-strong);">
+          <input type="password" id="login-password" placeholder="Password" autocomplete="current-password"
+                 class="guess-input" style="margin:0;border-left-color:var(--border-strong);">
+          <p id="login-error" style="color:var(--warm-text);font-size:0.82rem;min-height:1.1em;margin:0;font-family:'JetBrains Mono',monospace;letter-spacing:0.03em;"></p>
+          <button id="login-submit"
+                  style="padding:13px;background:var(--primary);color:var(--text-primary);border:none;cursor:pointer;
+                         font-family:'Oswald',sans-serif;font-size:0.95rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;
+                         clip-path:polygon(5px 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%,0 5px);
+                         transition:background 0.15s;">Sign In</button>
+        </div>
       </div>
+      <div class="modal-tab-panel" id="panel-register">
+        <div class="modal-rule">Create an account that works on both <strong>Rebuildle</strong> and <strong>StatCheck</strong>.</div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px;">
+          <input type="text" id="reg-username" placeholder="Username (2–20 chars, letters/numbers/_)" autocomplete="username"
+                 class="guess-input" style="margin:0;border-left-color:var(--border-strong);">
+          <input type="password" id="reg-password" placeholder="Password (8+ chars, letter + number)" autocomplete="new-password"
+                 class="guess-input" style="margin:0;border-left-color:var(--border-strong);">
+          <input type="password" id="reg-confirm" placeholder="Confirm password" autocomplete="new-password"
+                 class="guess-input" style="margin:0;border-left-color:var(--border-strong);">
+          <p id="reg-error" style="color:var(--warm-text);font-size:0.82rem;min-height:1.1em;margin:0;font-family:'JetBrains Mono',monospace;letter-spacing:0.03em;"></p>
+          <button id="reg-submit"
+                  style="padding:13px;background:var(--primary);color:var(--text-primary);border:none;cursor:pointer;
+                         font-family:'Oswald',sans-serif;font-size:0.95rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;
+                         clip-path:polygon(5px 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%,0 5px);
+                         transition:background 0.15s;">Create Account</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="player-overlay">
+  <div class="modal-card" style="max-width:560px;">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="ps-name"></div>
+        <div id="ps-meta" style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-muted);letter-spacing:0.15em;margin-top:5px;text-transform:uppercase;"></div>
+      </div>
+      <button class="modal-close" id="player-close">&times;</button>
+    </div>
+    <div class="modal-body" style="max-height:65vh;overflow-y:auto;padding-top:12px;padding-bottom:20px;gap:0;">
+      <div id="ps-attrs" style="display:grid;grid-template-columns:1fr 1fr;gap:0 20px;"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="profile-overlay">
+  <div class="modal-card" style="max-width:500px;">
+    <div class="modal-header">
+      <div class="modal-title">Profile</div>
+      <button class="modal-close" id="profile-close">&times;</button>
+    </div>
+    <div class="modal-body" style="gap:20px;padding-bottom:24px;">
+      <div style="text-align:center;">
+        <div id="profile-username" style="font-family:'Oswald',sans-serif;font-size:1.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-primary);"></div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:var(--text-dim);letter-spacing:0.2em;text-transform:uppercase;margin-top:5px;">Rebuildle · StatCheck</div>
+      </div>
+      <div id="profile-stat-cards" style="display:flex;gap:7px;"></div>
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;letter-spacing:0.28em;color:var(--text-dim);text-transform:uppercase;margin-bottom:12px;">Guess Distribution</div>
+        <div id="profile-dist"></div>
+      </div>
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;letter-spacing:0.28em;color:var(--text-dim);text-transform:uppercase;margin-bottom:12px;">By Sport</div>
+        <div id="profile-sports"></div>
+      </div>
+      <button id="profile-signout"
+              style="padding:12px;background:rgba(122,31,48,0.18);color:var(--warm-text);border:1px solid rgba(122,31,48,0.35);cursor:pointer;
+                     font-family:'Oswald',sans-serif;font-size:0.88rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;
+                     clip-path:polygon(5px 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%,0 5px);
+                     transition:background 0.15s;">Sign Out</button>
     </div>
   </div>
 </div>
@@ -445,15 +543,26 @@ let currentUser = null;
 const loginOverlay = document.getElementById("login-overlay");
 const authBtn = document.getElementById("auth-btn");
 
+function switchAuthTab(tab) {
+  document.getElementById("tab-signin").classList.toggle("active", tab === "signin");
+  document.getElementById("tab-register").classList.toggle("active", tab === "register");
+  document.getElementById("panel-signin").classList.toggle("active", tab === "signin");
+  document.getElementById("panel-register").classList.toggle("active", tab === "register");
+  document.getElementById("login-error").textContent = "";
+  document.getElementById("reg-error").textContent = "";
+}
+
 document.getElementById("login-close").addEventListener("click", () => loginOverlay.classList.remove("open"));
 loginOverlay.addEventListener("click", e => { if (e.target === loginOverlay) loginOverlay.classList.remove("open"); });
 document.getElementById("login-submit").addEventListener("click", doLogin);
 document.getElementById("login-password").addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
+document.getElementById("reg-submit").addEventListener("click", doRegister);
+document.getElementById("reg-confirm").addEventListener("keydown", e => { if (e.key === "Enter") doRegister(); });
 
 function updateAuthUI() {
   if (currentUser) {
-    authBtn.textContent = currentUser.username + " · Sign Out";
-    authBtn.onclick = doLogout;
+    authBtn.textContent = currentUser.username;
+    authBtn.onclick = openProfile;
     let adminLink = document.getElementById("admin-nav-link");
     if (currentUser.is_admin) {
       if (!adminLink) {
@@ -469,7 +578,7 @@ function updateAuthUI() {
     }
   } else {
     authBtn.textContent = "Sign In";
-    authBtn.onclick = () => loginOverlay.classList.add("open");
+    authBtn.onclick = () => { switchAuthTab("signin"); loginOverlay.classList.add("open"); };
     const adminLink = document.getElementById("admin-nav-link");
     if (adminLink) adminLink.remove();
   }
@@ -508,6 +617,113 @@ async function doLogout() {
   updateAuthUI();
 }
 
+async function doRegister() {
+  const username = document.getElementById("reg-username").value.trim();
+  const password = document.getElementById("reg-password").value;
+  const confirm  = document.getElementById("reg-confirm").value;
+  const errEl    = document.getElementById("reg-error");
+  errEl.textContent = "";
+  if (!username || !password || !confirm) { errEl.textContent = "All fields are required."; return; }
+  const res = await fetch("/api/register", {
+    method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({username, password, confirm}),
+  });
+  const data = await res.json();
+  if (!res.ok) { errEl.textContent = data.error || "Registration failed."; return; }
+  loginOverlay.classList.remove("open");
+  document.getElementById("reg-username").value = "";
+  document.getElementById("reg-password").value = "";
+  document.getElementById("reg-confirm").value = "";
+  await checkAuth();
+}
+
+// ── Player stats ──────────────────────────────────────────────────────────────
+const playerOverlay = document.getElementById("player-overlay");
+document.getElementById("player-close").addEventListener("click", () => playerOverlay.classList.remove("open"));
+playerOverlay.addEventListener("click", e => { if (e.target === playerOverlay) playerOverlay.classList.remove("open"); });
+
+async function openPlayerStats(name) {
+  const res = await fetch(`/api/player-stats?name=${encodeURIComponent(name)}&sport=${currentSport}`);
+  if (!res.ok) return;
+  const p = await res.json();
+  document.getElementById("ps-name").textContent = p.name;
+  document.getElementById("ps-meta").textContent = [p.team, p.position, "OVR " + p.overall].filter(Boolean).join(" · ");
+  const attrsEl = document.getElementById("ps-attrs");
+  attrsEl.innerHTML = Object.entries(p.attrs).map(([k, v]) => {
+    const label = (p.attrLabels && p.attrLabels[k]) || k;
+    const color = v >= 90 ? "var(--accent)" : v >= 80 ? "var(--exact-text)" : v >= 70 ? "var(--close-text)" : v >= 60 ? "var(--warm-text)" : "var(--cold-text)";
+    return '<div class="ps-attr-row"><span class="ps-attr-label">' + escapeHtml(label) + '</span><span class="ps-attr-val" style="color:' + color + ';">' + v + '</span></div>';
+  }).join("");
+  playerOverlay.classList.add("open");
+}
+
+// ── Profile ───────────────────────────────────────────────────────────────────
+const profileOverlay = document.getElementById("profile-overlay");
+document.getElementById("profile-close").addEventListener("click", () => profileOverlay.classList.remove("open"));
+profileOverlay.addEventListener("click", e => { if (e.target === profileOverlay) profileOverlay.classList.remove("open"); });
+document.getElementById("profile-signout").addEventListener("click", () => {
+  profileOverlay.classList.remove("open");
+  doLogout();
+});
+
+const SPORT_NAMES_FULL = { nba: "NBA 2K", nhl: "NHL 26", madden: "Madden 26", mlb: "MLB The Show 26" };
+
+async function openProfile() {
+  const res = await fetch("/api/my-stats");
+  if (!res.ok) return;
+  const d = await res.json();
+
+  document.getElementById("profile-username").textContent = d.username || (currentUser && currentUser.username) || "";
+
+  // Stat cards
+  const wr = d.total_played ? d.win_rate + "%" : "—";
+  const cards = [
+    { val: d.total_played, label: "Played" },
+    { val: wr,             label: "Win Rate" },
+    { val: d.current_streak, label: "Streak" },
+    { val: d.max_streak,   label: "Best" },
+  ];
+  document.getElementById("profile-stat-cards").innerHTML = cards.map(c =>
+    `<div style="flex:1;text-align:center;padding:12px 6px;background:var(--bg-mid);border:1px solid var(--border);
+                 clip-path:polygon(5px 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%,0 5px);">
+      <div style="font-family:'Oswald',sans-serif;font-size:1.7rem;font-weight:700;color:var(--accent);">${c.val}</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:var(--text-dim);letter-spacing:0.08em;text-transform:uppercase;margin-top:4px;">${c.label}</div>
+    </div>`
+  ).join("");
+
+  // Guess distribution
+  const dist = d.distribution || {};
+  const keys = ["1","2","3","4","5","fail"];
+  const maxVal = Math.max(...keys.map(k => dist[k] || 0), 1);
+  document.getElementById("profile-dist").innerHTML = keys.map(k => {
+    const v = dist[k] || 0;
+    const pct = Math.round(v / maxVal * 100);
+    const isFail = k === "fail";
+    const barBg = isFail ? "var(--warm-bg)" : "var(--exact-bg)";
+    const barBorder = isFail ? "rgba(140,40,60,0.6)" : "var(--exact-border)";
+    return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--text-muted);width:14px;text-align:center;flex-shrink:0;">${isFail ? "X" : k}</span>
+      <div style="flex:1;height:22px;background:var(--bg-mid);">
+        <div style="height:100%;width:${pct}%;min-width:${v ? '4px' : '0'};background:${barBg};border-right:${v ? '2px solid ' + barBorder : 'none'};"></div>
+      </div>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--text-muted);width:18px;text-align:right;flex-shrink:0;">${v}</span>
+    </div>`;
+  }).join("");
+
+  // By sport
+  const bySport = d.by_sport || {};
+  document.getElementById("profile-sports").innerHTML = Object.entries(SPORT_NAMES_FULL).map(([sport, name]) => {
+    const s = bySport[sport] || { played: 0, won: 0 };
+    const wr = s.played ? Math.round(s.won / s.played * 100) + "% win" : "—";
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+      <span style="font-family:'Oswald',sans-serif;font-size:0.9rem;font-weight:600;color:var(--text-primary);">${name}</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-muted);">${s.played} played · ${wr}</span>
+    </div>`;
+  }).join("");
+
+  profileOverlay.classList.add("open");
+}
+
 // ── Game state ────────────────────────────────────────────────────────────────
 let players = [];
 let state = null;
@@ -535,6 +751,8 @@ document.addEventListener("keydown", e => {
   if (e.key === "Escape") {
     overlay.classList.remove("open");
     loginOverlay.classList.remove("open");
+    playerOverlay.classList.remove("open");
+    profileOverlay.classList.remove("open");
     sportDropdown.classList.remove("open");
     sportBtn.classList.remove("open");
   }
@@ -610,7 +828,7 @@ function render() {
     if (state.done && state.answer) {
       const glowClass = justEnded ? " just-ended" : "";
       html += '<div class="answer-revealed' + glowClass + '">';
-      html += '<span class="answer-name-display">' + escapeHtml(state.answer.name) + '</span>';
+      html += '<span class="answer-name-display player-name-link" data-pname="' + escapeHtml(state.answer.name) + '">' + escapeHtml(state.answer.name) + '</span>';
       html += teamLogoHtml(state.answer.team);
       if (state.won) {
         html += '<span class="answer-sub win-sub">Solved in ' + state.guesses.length + ' / ' + state.maxGuesses + '</span>';
@@ -638,7 +856,7 @@ function render() {
     const scale = Math.pow(0.925, (totalGuesses - 1) - idx);
     const mb = Math.round(6 - (1 - scale) * 130);
     gHtml += '<div class="guess-block" style="transform:scale(' + scale.toFixed(3) + ');transform-origin:top center;margin-bottom:' + mb + 'px;">';
-    gHtml += '<div class="guess-name">' + escapeHtml(g.name) + '<span class="guess-meta">' + escapeHtml(g.pos || "") + '</span>' + teamLogoHtml(g.team) + '</div>';
+    gHtml += '<div class="guess-name"><span class="player-name-link" data-pname="' + escapeHtml(g.name) + '">' + escapeHtml(g.name) + '</span><span class="guess-meta">' + escapeHtml(g.pos || "") + '</span>' + teamLogoHtml(g.team) + '</div>';
     gHtml += '<div class="tile-row">';
     state.revealedAttrs.forEach((attr, i) => {
       const gv = g[attr] !== undefined ? g[attr] : 0;
@@ -711,6 +929,16 @@ input.addEventListener("keydown", e => {
 });
 document.addEventListener("click", e => {
   if (!input.contains(e.target) && !dropdown.contains(e.target)) dropdown.style.display = "none";
+});
+
+// ── Player name click delegation ─────────────────────────────────────────────
+document.getElementById("guesses-section").addEventListener("click", e => {
+  const link = e.target.closest(".player-name-link");
+  if (link) openPlayerStats(link.dataset.pname);
+});
+document.getElementById("target-section").addEventListener("click", e => {
+  const link = e.target.closest(".player-name-link");
+  if (link) openPlayerStats(link.dataset.pname);
 });
 
 // ── How to Play auto-open ─────────────────────────────────────────────────────

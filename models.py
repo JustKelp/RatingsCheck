@@ -446,6 +446,51 @@ def get_or_create_user_stats(user_id: str) -> dict:
         }
 
 
+def save_game_session(user_id: str, sport: str, date_str: str, won: bool, guess_names: list) -> bool:
+    """Persist a completed game. Returns True if this is a new completion, False if replacing."""
+    _, _, st = _sport_tables(sport)
+    try:
+        con = _con()
+        existing = con.execute(
+            f"SELECT id FROM {st} WHERE user_id=? AND date=? AND completed=1",
+            (user_id, date_str),
+        ).fetchone()
+        is_new = existing is None
+        con.execute(
+            f"""INSERT OR REPLACE INTO {st}
+               (user_id, date, guesses_json, won, completed, completed_at)
+               VALUES (?,?,?,?,1,CURRENT_TIMESTAMP)""",
+            (user_id, date_str, json.dumps(guess_names), 1 if won else 0),
+        )
+        con.commit()
+        con.close()
+        return is_new
+    except Exception as exc:
+        print(f"[ERROR] save_game_session({user_id}, {sport}, {date_str}): {exc}")
+        return False
+
+
+def get_user_sport_stats(user_id: str) -> dict:
+    """Return per-sport played/won counts for a user."""
+    result = {}
+    for sport in SPORT_ATTR_KEYS:
+        _, _, st = _sport_tables(sport)
+        try:
+            con = _con()
+            played = con.execute(
+                f"SELECT COUNT(*) FROM {st} WHERE user_id=? AND completed=1", (user_id,)
+            ).fetchone()[0]
+            won = con.execute(
+                f"SELECT COUNT(*) FROM {st} WHERE user_id=? AND won=1 AND completed=1", (user_id,)
+            ).fetchone()[0]
+            con.close()
+            result[sport] = {"played": played, "won": won}
+        except Exception as exc:
+            print(f"[ERROR] get_user_sport_stats({user_id}, {sport}): {exc}")
+            result[sport] = {"played": 0, "won": 0}
+    return result
+
+
 def update_user_stats(user_id: str, guess_count: int, won: bool) -> None:
     stats = get_or_create_user_stats(user_id)
     dist = stats["distribution"]

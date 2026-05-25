@@ -19,17 +19,19 @@ import hashlib
 import hmac as _hmac
 import logging
 import os
+import re
 import secrets
 import sqlite3
 import time
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 
 from models import (
     ATTR_KEYS, NBA_ATTR_KEYS, NHL_ATTR_KEYS, MADDEN_ATTR_KEYS, MLB_ATTR_KEYS,
     SPORT_ATTR_KEYS, VALID_SPORTS, DB_PATH, _sport_tables,
     apply_override, get_all_players, get_past_puzzles, get_player_by_id,
     get_today_puzzle_db, get_upcoming_puzzles, get_or_create_user_stats,
-    init_db, migrate_db, save_daily_puzzle, update_user_stats, upsert_player,
+    get_user_sport_stats, init_db, migrate_db, save_daily_puzzle,
+    save_game_session, update_user_stats, upsert_player,
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -148,6 +150,36 @@ def _get_statcheck_user(username: str) -> dict | None:
         return dict(row) if row else None
     except Exception as exc:
         log.error("_get_statcheck_user(%s): %s", username, exc)
+        return None
+
+
+_USERNAME_RE = re.compile(r'^[A-Za-z0-9_]{2,20}$')
+_PASSWORD_RE = re.compile(r'^(?=.*[A-Za-z])(?=.*\d).{8,200}$')
+
+
+def _create_statcheck_user(username: str, password: str) -> dict | None:
+    """Write a new user to StatCheck's DB. Returns the new row or None on failure."""
+    if not STATCHECK_USERS_DB:
+        return None
+    try:
+        ph = generate_password_hash(password)
+        con = sqlite3.connect(STATCHECK_USERS_DB)
+        con.row_factory = sqlite3.Row
+        con.execute(
+            "INSERT INTO users (username, password_hash, nfl_mascot, mlb_mascot, nba_mascot, nhl_mascot) "
+            "VALUES (?,?,?,?,?,?)",
+            (username, ph, "KC", "NYY", "LAL", "BOS"),
+        )
+        con.commit()
+        row = con.execute(
+            "SELECT id, username FROM users WHERE username=? COLLATE NOCASE", (username,)
+        ).fetchone()
+        con.close()
+        return dict(row) if row else None
+    except sqlite3.IntegrityError:
+        return None
+    except Exception as exc:
+        log.error("_create_statcheck_user(%s): %s", username, exc)
         return None
 
 
@@ -505,6 +537,34 @@ def api_logout():
     return jsonify({"ok": True})
 
 
+@app.route("/api/register", methods=["POST"])
+def api_register():
+    data = request.get_json(silent=True) or {}
+    username = str(data.get("username", "")).strip()
+    password = str(data.get("password", ""))
+    confirm  = str(data.get("confirm", ""))
+    if not username or not password:
+        return jsonify({"error": "Username and password required."}), 400
+    if not _USERNAME_RE.match(username):
+        return jsonify({"error": "Username must be 2–20 chars, letters/numbers/underscores only."}), 400
+    if not _PASSWORD_RE.match(password):
+        return jsonify({"error": "Password must be 8–200 chars with at least one letter and one number."}), 400
+    if password != confirm:
+        return jsonify({"error": "Passwords do not match."}), 400
+    if not _statcheck_db_available or not STATCHECK_USERS_DB:
+        return jsonify({"error": "Registration temporarily unavailable."}), 503
+    if _get_statcheck_user(username):
+        return jsonify({"error": "Username already taken."}), 409
+    user = _create_statcheck_user(username, password)
+    if not user:
+        return jsonify({"error": "Username already taken."}), 409
+    session["user_id"] = str(user["id"])
+    session["username"] = user["username"]
+    session.modified = True
+    log.info("Register: %s", user["username"])
+    return jsonify({"ok": True, "user_id": str(user["id"]), "username": user["username"]})
+
+
 @app.route("/api/guess", methods=["POST"])
 def api_guess():
     data = request.get_json(silent=True) or {}
@@ -541,6 +601,14 @@ def api_guess():
             state["done"] = True
             state["revealed"] = len(puzzle["revealOrder"])
 
+    if state["done"]:
+        user_id = session.get("user_id")
+        if user_id:
+            guess_names = [g["name"] if isinstance(g, dict) else g for g in state["guesses"]]
+            is_new = save_game_session(user_id, sport, date_str, state["won"], guess_names)
+            if is_new and date_str == date.today().isoformat():
+                update_user_stats(user_id, len(state["guesses"]), state["won"])
+
     session.modified = True
     return jsonify(serialize_state(sport, date_str))
 
@@ -566,6 +634,55 @@ def api_reset():
     sport = _parse_sport()
     session[f"game_{sport}"] = fresh_state()
     return jsonify(serialize_state(sport))
+
+
+@app.route("/api/my-stats")
+def api_my_stats():
+    user_id  = session.get("user_id")
+    username = session.get("username", "")
+    if not user_id:
+        claims = _require_auth()
+        if claims:
+            user_id  = claims["user_id"]
+            username = claims["username"]
+    if not user_id:
+        return jsonify({"error": "Not logged in"}), 401
+    stats      = get_or_create_user_stats(user_id)
+    by_sport   = get_user_sport_stats(user_id)
+    total_played = stats["total_played"]
+    total_won    = stats["total_won"]
+    return jsonify({
+        "ok": True,
+        "username": username,
+        "current_streak": stats["current_streak"],
+        "max_streak":     stats["max_streak"],
+        "total_played":   total_played,
+        "total_won":      total_won,
+        "win_rate":       round(total_won / total_played * 100, 1) if total_played else 0,
+        "distribution":   stats["distribution"],
+        "by_sport":       by_sport,
+    })
+
+
+@app.route("/api/player-stats")
+def api_player_stats():
+    sport = _parse_sport()
+    name = request.args.get("name", "").strip()
+    if not name:
+        return jsonify({"error": "name required"}), 400
+    player = find_player(name, sport)
+    if not player:
+        return jsonify({"error": "not found"}), 404
+    attr_keys = SPORT_ATTR_KEYS[sport]
+    attr_labels = SPORT_ATTR_LABELS[sport]
+    return jsonify({
+        "name": player["name"],
+        "team": player.get("team", ""),
+        "position": player.get("position", player.get("pos", "")),
+        "overall": player.get("overall", 0),
+        "attrs": {k: player.get(k, 0) for k in attr_keys},
+        "attrLabels": attr_labels,
+    })
 
 
 # =============================================================================
