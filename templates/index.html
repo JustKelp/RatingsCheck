@@ -340,19 +340,19 @@ input.guess-input::placeholder { color: var(--text-dim); }
       <div class="modal-swatches">
         <div class="modal-swatch-row">
           <div class="modal-swatch-tile" style="background:var(--exact-bg);border:1px solid var(--exact-border);color:var(--exact-text)">87</div>
-          <div class="modal-swatch-label"><strong style="color:var(--exact-text)">Exact</strong> &mdash; within 1 point of the answer</div>
+          <div class="modal-swatch-label"><strong style="color:var(--exact-text)">Exact</strong> &mdash; exact match</div>
         </div>
         <div class="modal-swatch-row">
           <div class="modal-swatch-tile" style="background:var(--close-bg);border:1px solid var(--close-border);color:var(--close-text)">74</div>
-          <div class="modal-swatch-label"><strong style="color:var(--close-text)">Close</strong> &mdash; within 5 points</div>
+          <div class="modal-swatch-label"><strong style="color:var(--close-text)">Close</strong> &mdash; within 3 points</div>
         </div>
         <div class="modal-swatch-row">
           <div class="modal-swatch-tile" style="background:var(--warm-bg);border:1px solid var(--warm-border);color:var(--warm-text)">61</div>
-          <div class="modal-swatch-label"><strong style="color:var(--warm-text)">Warm</strong> &mdash; within 10 points</div>
+          <div class="modal-swatch-label"><strong style="color:var(--warm-text)">Warm</strong> &mdash; within 7 points</div>
         </div>
         <div class="modal-swatch-row">
           <div class="modal-swatch-tile" style="background:var(--cold-bg);border:1px solid var(--cold-border);color:var(--cold-text)">42</div>
-          <div class="modal-swatch-label"><strong style="color:var(--cold-text)">Cold</strong> &mdash; more than 10 points away</div>
+          <div class="modal-swatch-label"><strong style="color:var(--cold-text)">Cold</strong> &mdash; more than 7 points away</div>
         </div>
       </div>
       <div class="modal-rule">Each guess also shows two hint chips for <strong>position</strong> and <strong>team</strong>:</div>
@@ -469,10 +469,10 @@ input.guess-input::placeholder { color: var(--text-dim); }
   <div class="status-bar" id="status-bar"></div>
 
   <div class="legend">
-    <div class="legend-item"><div class="legend-swatch" style="background:#14281E;outline:1px solid #245A38"></div>&plusmn;1 exact</div>
-    <div class="legend-item"><div class="legend-swatch" style="background:#281600;outline:1px solid #7A5018"></div>&plusmn;5 close</div>
-    <div class="legend-item"><div class="legend-swatch" style="background:#200E14;outline:1px solid rgba(122,31,48,0.55)"></div>&plusmn;10 warm</div>
-    <div class="legend-item"><div class="legend-swatch" style="background:#0E0C10;outline:1px solid rgba(120,116,160,0.65)"></div>&gt;10 cold</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#14281E;outline:1px solid #245A38"></div>exact</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#281600;outline:1px solid #7A5018"></div>&plusmn;3 close</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#200E14;outline:1px solid rgba(122,31,48,0.55)"></div>&plusmn;7 warm</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#0E0C10;outline:1px solid rgba(120,116,160,0.65)"></div>&gt;7 cold</div>
   </div>
 </div>
 
@@ -829,9 +829,9 @@ document.getElementById("day-select").addEventListener("change", async e => {
 
 function pillClass(diff) {
   const a = Math.abs(diff);
-  if (a <= 1) return "exact";
-  if (a <= 5) return "close";
-  if (a <= 10) return "warm";
+  if (a === 0) return "exact";
+  if (a <= 3) return "close";
+  if (a <= 7) return "warm";
   return "cold";
 }
 function arrowFor(diff) {
