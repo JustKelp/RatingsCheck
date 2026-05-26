@@ -935,14 +935,42 @@ function render() {
 
 async function loadState() {
   const dateParam = currentViewDate ? `&date=${currentViewDate}` : "";
-  const res = await fetch(`/api/state?sport=${currentSport}${dateParam}`);
-  state = await res.json();
-  render();
+  try {
+    const res = await fetch(`/api/state?sport=${currentSport}${dateParam}`);
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      console.error("[loadState] HTTP", res.status, body.slice(0, 300));
+      document.getElementById("target-section").innerHTML =
+        '<div style="color:var(--warm-text);padding:24px;text-align:center;font-family:\'JetBrains Mono\',monospace;font-size:0.8rem;">' +
+        'Server error (' + res.status + ') — try refreshing.</div>';
+      return;
+    }
+    const data = await res.json();
+    if (!data || !Array.isArray(data.guesses)) {
+      console.error("[loadState] unexpected response:", data);
+      document.getElementById("target-section").innerHTML =
+        '<div style="color:var(--warm-text);padding:24px;text-align:center;font-family:\'JetBrains Mono\',monospace;font-size:0.8rem;">' +
+        'Unexpected server response — try refreshing.</div>';
+      return;
+    }
+    state = data;
+    render();
+  } catch(e) {
+    console.error("[loadState] fetch failed:", e);
+    document.getElementById("target-section").innerHTML =
+      '<div style="color:var(--warm-text);padding:24px;text-align:center;font-family:\'JetBrains Mono\',monospace;font-size:0.8rem;">' +
+      'Could not reach server — check connection and refresh.</div>';
+  }
 }
 
 async function loadPlayers() {
-  const res = await fetch(`/api/players?sport=${currentSport}`);
-  players = await res.json();
+  try {
+    const res = await fetch(`/api/players?sport=${currentSport}`);
+    if (!res.ok) { console.error("[loadPlayers] HTTP", res.status); return; }
+    players = await res.json();
+  } catch(e) {
+    console.error("[loadPlayers] fetch failed:", e);
+  }
 }
 
 async function submitGuess(name) {

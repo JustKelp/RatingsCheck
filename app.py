@@ -516,7 +516,11 @@ def api_state():
     date_str = request.args.get("date", today)
     if date_str > today:
         date_str = today
-    return jsonify(serialize_state(sport, date_str))
+    try:
+        return jsonify(serialize_state(sport, date_str))
+    except Exception as exc:
+        log.exception("api_state failed: sport=%s date=%s", sport, date_str)
+        return jsonify({"error": str(exc)}), 500
 
 
 @app.route("/api/players")
