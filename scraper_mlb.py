@@ -135,6 +135,7 @@ def parse_item(item: dict) -> dict | None:
         "team": team,
         "position": position,
         "overall": overall,
+        "series": item.get("series", ""),
         "attrs": attrs,
     }
 
@@ -163,8 +164,16 @@ def scrape_all_pages(
             if not player:
                 continue
             key = player["name"].lower()
-            if key not in seen or player["overall"] > seen[key]["overall"]:
+            if key not in seen:
                 seen[key] = player
+            else:
+                existing = seen[key]
+                new_is_live = player["series"] == "Live"
+                existing_is_live = existing["series"] == "Live"
+                if new_is_live and not existing_is_live:
+                    seen[key] = player  # Live base card always beats special card
+                elif new_is_live == existing_is_live and player["overall"] > existing["overall"]:
+                    seen[key] = player  # same tier: keep higher OVR
 
         total_pages = data.get("total_pages", page_end)
         log.info("  Parsed %d items (page %d / %d)", len(items), page_num, total_pages)
