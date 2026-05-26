@@ -235,10 +235,10 @@ header::after {
   letter-spacing: 0.04em; text-transform: uppercase; border: 1px solid;
   clip-path: polygon(3px 0, 100% 0, 100% calc(100% - 3px), calc(100% - 3px) 100%, 0 100%, 0 3px);
 }
-.hint-chip.exact { background: var(--exact-bg); border-color: var(--exact-border); color: var(--exact-text); }
-.hint-chip.close { background: var(--close-bg); border-color: var(--close-border); color: var(--close-text); }
-.hint-chip.warm  { background: var(--warm-bg);  border-color: var(--warm-border);  color: var(--warm-text); }
-.hint-chip.cold  { background: var(--cold-bg);  border-color: var(--cold-border);  color: var(--cold-text); }
+.hint-chip.exact { background: var(--exact-bg); border-color: var(--exact-border); color: var(--exact-text); filter: drop-shadow(0 0 5px rgba(46,110,68,0.55)); }
+.hint-chip.close { background: var(--close-bg); border-color: var(--close-border); color: var(--close-text); filter: drop-shadow(0 0 5px rgba(140,96,32,0.55)); }
+.hint-chip.warm  { background: var(--warm-bg);  border-color: var(--warm-border);  color: var(--warm-text);  filter: drop-shadow(0 0 5px rgba(140,40,60,0.55)); }
+.hint-chip.cold  { background: var(--cold-bg);  border-color: var(--cold-border);  color: var(--cold-text);  filter: drop-shadow(0 0 5px rgba(100,96,150,0.45)); }
 
 .input-area { position: relative; margin: 28px 0 12px; }
 input.guess-input {
