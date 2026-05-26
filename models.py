@@ -80,6 +80,9 @@ MADDEN_ATTR_KEYS = [
 ]
 
 # ── MLB The Show 26 ──────────────────────────────────────────────────────────────
+# Attributes use franchise (Play Now) ratings from showdd.io.
+# Pitcher columns k9Left/k9Right/h9Left/hr9 replace the DD-only
+# pitchVelocity/pitchMovement/bbPerBf/hrPerBf which have no franchise equivalent.
 MLB_ATTR_KEYS = [
     # Hitting
     "contactLeft", "contactRight", "powerLeft", "powerRight",
@@ -89,8 +92,8 @@ MLB_ATTR_KEYS = [
     # Fielding
     "armStrength", "armAccuracy", "fieldingAbility", "blocking",
     # Pitching (= 0 for hitters)
-    "stamina", "pitchingClutch", "bbPerBf", "hrPerBf",
-    "pitchControl", "pitchVelocity", "pitchMovement",
+    "stamina", "pitchingClutch", "pitchControl",
+    "k9Left", "k9Right", "h9Left", "hr9",
     # Bunting
     "buntingAbility", "dragBuntAbility",
     # General

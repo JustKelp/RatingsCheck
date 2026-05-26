@@ -267,9 +267,9 @@ MLB_ATTR_LABELS = {
     "speed": "Speed", "baserunningAbility": "Base Running", "baserunningAggr": "BR Aggr.",
     "armStrength": "Arm Strength", "armAccuracy": "Arm Accuracy",
     "fieldingAbility": "Fielding", "blocking": "Blocking",
-    "stamina": "Stamina", "pitchingClutch": "Pitch Clutch",
-    "bbPerBf": "BB/BF", "hrPerBf": "HR/BF",
-    "pitchControl": "Control", "pitchVelocity": "Velocity", "pitchMovement": "Movement",
+    "stamina": "Stamina", "pitchingClutch": "Pitch Clutch", "pitchControl": "Control",
+    "k9Left": "K/9 vs L", "k9Right": "K/9 vs R",
+    "h9Left": "H/9 vs L", "hr9": "HR/9",
     "buntingAbility": "Bunting", "dragBuntAbility": "Drag Bunt",
     "hittingDurability": "Durability",
 }
@@ -288,7 +288,7 @@ SPORT_DEFAULT_REVEAL_ORDERS = {
     "nba": ["three", "drivingDunk", "speed", "passAcc", "interiorD", "defRebound", "ballHandle", "steal"],
     "nhl": ["speed", "wristShotPow", "defAwareness", "bodyChecking", "faceoffs", "puckControl", "slapShotPow", "shotBlocking"],
     "madden": ["speed", "awareness", "throwPower", "catching", "tackle", "manCoverage", "strength", "acceleration"],
-    "mlb": ["speed", "contactRight", "powerRight", "fieldingAbility", "armStrength", "pitchVelocity", "pitchControl", "battingClutch"],
+    "mlb": ["speed", "contactRight", "powerRight", "fieldingAbility", "armStrength", "k9Left", "pitchControl", "battingClutch"],
 }
 
 # Backward compat alias
