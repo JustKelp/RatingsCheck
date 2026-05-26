@@ -235,10 +235,16 @@ header::after {
   letter-spacing: 0.04em; text-transform: uppercase; border: 1px solid;
   clip-path: polygon(3px 0, 100% 0, 100% calc(100% - 3px), calc(100% - 3px) 100%, 0 100%, 0 3px);
 }
-.hint-chip.exact { background: var(--exact-bg); border-color: var(--exact-border); color: var(--exact-text); filter: drop-shadow(0 0 5px rgba(46,110,68,0.55)); }
-.hint-chip.close { background: var(--close-bg); border-color: var(--close-border); color: var(--close-text); filter: drop-shadow(0 0 5px rgba(140,96,32,0.55)); }
-.hint-chip.warm  { background: var(--warm-bg);  border-color: var(--warm-border);  color: var(--warm-text);  filter: drop-shadow(0 0 5px rgba(140,40,60,0.55)); }
-.hint-chip.cold  { background: var(--cold-bg);  border-color: var(--cold-border);  color: var(--cold-text);  filter: drop-shadow(0 0 5px rgba(100,96,150,0.45)); }
+.hint-chip.exact { background: var(--exact-bg); border-color: var(--exact-border); color: var(--exact-text); }
+.hint-chip.close { background: var(--close-bg); border-color: var(--close-border); color: var(--close-text); }
+.hint-chip.warm  { background: var(--warm-bg);  border-color: var(--warm-border);  color: var(--warm-text);  }
+.hint-chip.cold  { background: var(--cold-bg);  border-color: var(--cold-border);  color: var(--cold-text);  }
+/* Glow wrapper — filter must live on a parent so clip-path doesn't clip the shadow */
+.hint-glow { display: inline-flex; }
+.hint-glow.exact { filter: drop-shadow(0 0 6px rgba(46,110,68,0.75)); }
+.hint-glow.close { filter: drop-shadow(0 0 6px rgba(180,130,40,0.75)); }
+.hint-glow.warm  { filter: drop-shadow(0 0 6px rgba(160,50,70,0.75));  }
+.hint-glow.cold  { filter: drop-shadow(0 0 6px rgba(100,96,160,0.6));  }
 
 .input-area { position: relative; margin: 28px 0 12px; }
 input.guess-input {
@@ -360,15 +366,15 @@ input.guess-input::placeholder { color: var(--text-dim); }
       <div class="modal-rule">Each guess also shows two hint chips for <strong>position</strong> and <strong>team</strong>:</div>
       <div class="modal-swatches">
         <div class="modal-swatch-row">
-          <div class="modal-swatch-tile hint-chip exact" style="width:48px;height:36px;justify-content:center;font-size:0.7rem;">PG</div>
+          <span class="hint-glow exact"><div class="modal-swatch-tile hint-chip exact" style="width:48px;height:36px;justify-content:center;font-size:0.7rem;">PG</div></span>
           <div class="modal-swatch-label"><strong style="color:var(--exact-text)">Green</strong> &mdash; exact position or exact team</div>
         </div>
         <div class="modal-swatch-row">
-          <div class="modal-swatch-tile hint-chip close" style="width:48px;height:36px;justify-content:center;font-size:0.7rem;">SF</div>
+          <span class="hint-glow close"><div class="modal-swatch-tile hint-chip close" style="width:48px;height:36px;justify-content:center;font-size:0.7rem;">SF</div></span>
           <div class="modal-swatch-label"><strong style="color:var(--close-text)">Yellow</strong> &mdash; same position group or same conference</div>
         </div>
         <div class="modal-swatch-row">
-          <div class="modal-swatch-tile hint-chip cold" style="width:48px;height:36px;justify-content:center;font-size:0.7rem;">C</div>
+          <span class="hint-glow cold"><div class="modal-swatch-tile hint-chip cold" style="width:48px;height:36px;justify-content:center;font-size:0.7rem;">C</div></span>
           <div class="modal-swatch-label"><strong style="color:var(--cold-text)">Black</strong> &mdash; different group or different conference</div>
         </div>
       </div>
@@ -870,8 +876,8 @@ function render() {
       const ansPos  = state.answer.position || state.answer.pos || "";
       const ansTeam = state.answer.team || "";
       html += '<div style="margin-top:6px;display:flex;align-items:center;justify-content:center;gap:6px;">';
-      if (ansPos)  html += '<span class="hint-chip exact">' + escapeHtml(ansPos) + '</span>';
-      if (ansTeam) html += '<span class="hint-chip exact">' + escapeHtml(ansTeam) + '</span>';
+      if (ansPos)  html += '<span class="hint-glow exact"><span class="hint-chip exact">' + escapeHtml(ansPos) + '</span></span>';
+      if (ansTeam) html += '<span class="hint-glow exact"><span class="hint-chip exact">' + escapeHtml(ansTeam) + '</span></span>';
       html += teamLogoHtml(ansTeam) + '</div>';
       if (state.won) {
         html += '<span class="answer-sub win-sub">Solved in ' + state.guesses.length + ' / ' + state.maxGuesses + '</span>';
@@ -904,8 +910,8 @@ function render() {
     const mb = Math.round(6 - (1 - scale) * 130);
     gHtml += '<div class="guess-block" style="transform:scale(' + scale.toFixed(3) + ');transform-origin:top center;margin-bottom:' + mb + 'px;">';
     gHtml += '<div class="guess-name">' + escapeHtml(g.name)
-      + '<span class="hint-chip ' + (g.pos_hint || "cold") + '">' + escapeHtml(g.pos || "?") + '</span>'
-      + '<span class="hint-chip ' + (g.team_hint || "cold") + '">' + escapeHtml(g.team || "?") + '</span>'
+      + '<span class="hint-glow ' + (g.pos_hint || "cold") + '"><span class="hint-chip ' + (g.pos_hint || "cold") + '">' + escapeHtml(g.pos || "?") + '</span></span>'
+      + '<span class="hint-glow ' + (g.team_hint || "cold") + '"><span class="hint-chip ' + (g.team_hint || "cold") + '">' + escapeHtml(g.team || "?") + '</span></span>'
       + teamLogoHtml(g.team) + '</div>';
     gHtml += '<div class="tile-row">';
     // OVR guess tile
